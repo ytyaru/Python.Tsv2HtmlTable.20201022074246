@@ -53,13 +53,15 @@ class Cell:
                 else:
                     rs = self.__RowSpanLen(ri, ci)
                     cs = self.__ColSpanLen(ri, ci)
-                    if self.__isZeroRect(ri, ci, rs, cs): self.__spanLenMap[-1].append([rs,cs])
-                    else: self.__spanLenMap[-1].append([1,1])
+#                    if self.__isZeroRect(ri, ci, rs, cs): self.__spanLenMap[-1].append([rs,cs])
+#                    else: self.__spanLenMap[-1].append([1,1])
+                    self.__spanLenMap[-1].append([rs,cs])
                 print(self.__spanLenMap[-1][-1], end=',')
             print()
         self.__LeftTopSpanLen()
         self.__ColspanStopByRowspan()
         self.__ColspanLengthRetry()
+        self.__ZeroRect()
 #        self.__RowspanStopByColspan()
 #        self.__RowspanLengthRetry()
 
@@ -80,12 +82,12 @@ class Cell:
             if 0 == self.__textLenMap[ri][ci+col_len]: col_len += 1
             else: break
         return col_len
-    def __isZeroRect(self, ri, ci, rs, cs):
-        if 1 < rs and 1 < cs:
-            for R in range(ri, ri+rs):
-                for C in range(ci, ci+cs):
-                    if not 0 == self.__textLenMap[R][C]: return False
-        return True
+#    def __isZeroRect(self, ri, ci, rs, cs):
+#        if 1 < rs and 1 < cs:
+#            for R in range(ri, ri+rs):
+#                for C in range(ci, ci+cs):
+#                    if not 0 == self.__textLenMap[R][C]: return False
+#        return True
     def __LeftTopSpanLen(self):
         if 0 == self.__spanLenMap[0][0][0] and 0 == self.__spanLenMap[0][0][1]:
             rs = self.__RowSpanLen(0, 0)
@@ -135,6 +137,25 @@ class Cell:
             if 0 == self.__spanLenMap[ri+row_len][ci][0]: row_len += 1
             else: break
         return row_len
+    def __ZeroRect(self):
+        for ri in range(len(self.__spanLenMap)):
+            for ci in range(len(self.__spanLenMap[ri])):
+                if not self.__isZeroRect(ri, ci, *self.__spanLenMap[ri][ci]):
+                    self.__setSpanAllOne(ri, ci, *self.__spanLenMap[ri][ci])
+    def __isZeroRect(self, ri, ci, rs, cs):
+        if 1 < rs and 1 < cs:
+            for R in range(ri, ri+rs):
+                for C in range(ci, ci+cs):
+                    if not 0 == self.__textLenMap[R][C]: return False
+        return True
+    def __setSpanAllOne(self, ri, ci, rs, cs):
+        self.__spanLenMap[ri][ci][0] = 1
+        self.__spanLenMap[ri][ci][1] = 1
+        for R in range(ri, ri+rs):
+            for C in range(ci, ci+cs):
+                if self.__spanLenMap[R][C][0] < 1 and self.__spanLenMap[R][C][1] < 1:
+                    self.__spanLenMap[R][C][0] = 1
+                    self.__spanLenMap[R][C][1] = 1
 
 class ToTable:
     def __init__(self, cell):
@@ -143,25 +164,22 @@ class ToTable:
         return Html.enclose('table', self.__make_row_header() + self.__make_body())
     def __make_row_header(self):
         html = ''
-        for ri in range(len(self.cell.TextMap)):
+        for ri in range(self.cell.RowHeaderNum):
             tr = ''
             for ci in range(len(self.cell.TextMap[ri])):
-#                if (0,0) == self.cell.SpanLenMap[ri][ci]: continue
                 if self.cell.SpanLenMap[ri][ci][0] < 1 and self.cell.SpanLenMap[ri][ci][1] < 1: continue
                 tr += Html.enclose('th', self.cell.TextMap[ri][ci], self.__make_attr(ri, ci))
             html += Html.enclose('tr', tr)
         return html
     def __make_body(self):
         html = ''
-        for ri in range(self.cell.RowHeaderNum, len(self.cell.TextMap)-self.cell.RowHeaderNum):
+        for ri in range(self.cell.RowHeaderNum, len(self.cell.TextMap)):
             th = ''
             td = ''
             for chi in range(self.cell.ColumnHeaderNum):
-#                if (0,0) == self.cell.SpanLenMap[ri][chi]: continue
                 if self.cell.SpanLenMap[ri][chi][0] < 1 and self.cell.SpanLenMap[ri][chi][1] < 1: continue
                 th += Html.enclose('th', self.cell.TextMap[ri][chi], self.__make_attr(ri, chi))
             for cdi in range(self.cell.ColumnHeaderNum, len(self.cell.TextMap)):
-#                if (0,0) == self.cell.SpanLenMap[ri][chi]: continue
                 if self.cell.SpanLenMap[ri][cdi][0] < 1 and self.cell.SpanLenMap[ri][cdi][1] < 1: continue
                 td += Html.enclose('td', self.cell.TextMap[ri][cdi], self.__make_attr(ri, cdi))
             html += Html.enclose('tr', th+td)

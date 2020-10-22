@@ -2,6 +2,9 @@
 th {
     background-color: #FFCCCC;
 }
+td {
+    border: solid 1px #CCCCCC;
+}
 th[colspan] span {
     text-align: center;
     vertical-align: middle;

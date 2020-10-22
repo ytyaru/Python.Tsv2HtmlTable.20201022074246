@@ -49,16 +49,21 @@ class Cell:
         for ri, row in enumerate(self.__textLenMap):
             self.__spanLenMap.append([])
             for ci, col in enumerate(self.__textLenMap[ri]):
-                if 0 == col: self.__spanLenMap[-1].append((0,0))
+                if 0 == col: self.__spanLenMap[-1].append([0,0])
                 else:
                     rs = self.__RowSpanLen(ri, ci)
                     cs = self.__ColSpanLen(ri, ci)
-                    if self.__isZeroRect(ri, ci, rs, cs): self.__spanLenMap[-1].append((rs,cs))
-                    else: self.__spanLenMap[-1].append((1,1))
+                    if self.__isZeroRect(ri, ci, rs, cs): self.__spanLenMap[-1].append([rs,cs])
+                    else: self.__spanLenMap[-1].append([1,1])
                 print(self.__spanLenMap[-1][-1], end=',')
             print()
         self.__LeftTopSpanLen()
-        print(self.__spanLenMap)
+        self.__ColspanStopByRowspan()
+        for ri in range(len(self.__spanLenMap)):
+            print(self.__spanLenMap[ri])
+#            for ci in range(self.__spanLenMap[ri]):
+#                print()
+#        print(self.__spanLenMap)
     def __RowSpanLen(self, ri, ci):
         row_len = 1
         if len(self.__textLenMap) <= ri+row_len: return row_len
@@ -80,13 +85,25 @@ class Cell:
                     if not 0 == self.__textLenMap[R][C]: return False
         return True
     def __LeftTopSpanLen(self):
-        rs = self.__RowSpanLen(0, 0)
-        cs = self.__ColSpanLen(0, 0)
-        if self.__isZeroRect(0, 0, rs, cs):
-            self.__spanLenMap[0].pop(0)
-            self.__spanLenMap[0].insert(0, (rs,cs))
-            self.__row_header_num = rs
-            self.__col_header_num = cs
+        if 0 == self.__spanLenMap[0][0][0] and 0 == self.__spanLenMap[0][0][1]:
+            rs = self.__RowSpanLen(0, 0)
+            cs = self.__ColSpanLen(0, 0)
+            if self.__isZeroRect(0, 0, rs, cs):
+                self.__spanLenMap[0][0][0] = rs
+                self.__spanLenMap[0][0][1] = cs
+#               self.__spanLenMap[0].pop(0)
+#               self.__spanLenMap[0].insert(0, (rs,cs))
+                self.__row_header_num = rs
+                self.__col_header_num = cs
+    def __ColspanStopByRowspan(self):
+        for ri in range(len(self.__spanLenMap)):
+            for ci in range(len(self.__spanLenMap[ri])):
+                self.__setColspanMinus(ri, ci, self.__spanLenMap[ri][ci][0])
+
+    def __setColspanMinus(self, ri, ci, rlen):
+        if 1 < self.__spanLenMap[ri][ci][0]:
+            for R in range(ri+1, ri+rlen):
+                self.__spanLenMap[R][ci][1] = -1
 
 class ToTable:
     def __init__(self, cell):

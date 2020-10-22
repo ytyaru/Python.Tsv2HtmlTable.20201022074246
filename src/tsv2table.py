@@ -42,6 +42,7 @@ class Cell:
                     else: self.__spanLenMap[-1].append((1,1))
                 print(self.__spanLenMap[-1][-1], end=',')
             print()
+        self.__LeftTopSpanLen()
         print(self.__spanLenMap)
     def __RowSpanLen(self, ri, ci):
         row_len = 1
@@ -63,5 +64,36 @@ class Cell:
                 for C in range(ci, ci+cs):
                     if not 0 == self.__textLenMap[R][C]: return False
         return True
+    def __LeftTopSpanLen(self):
+        rs = self.__RowSpanLen(0, 0)
+        cs = self.__ColSpanLen(0, 0)
+        if self.__isZeroRect(0, 0, rs, cs):
+            self.__spanLenMap[0].pop(0)
+            self.__spanLenMap[0].insert(0, (rs,cs))
+
+class ToTable:
+    def to_table(self, textMap, spanMap):
+        for sr in spanMap:
+            for sc in spanMap[sr]:
+                pass
+
+        
+#    def __make_row_header(self):
+        
+#    def __make_body(self):
+#    def __make_col_header(self):
+#    def __make_data_line(self):
+
+class Html:
+    @staticmethod
+    def enclose(element, text='', attrs={}):
+        return '<' + element + Html.attrs(attrs) + '>' + text + '</' + element + '>'
+    @staticmethod
+    def attrs(attrs):
+        result = ''
+        for key in attrs.keys():
+            result += ' {}="{}"'.format(key, attrs[key])
+        return result
+
 if __name__ == '__main__':
     TsvToTable().parse()

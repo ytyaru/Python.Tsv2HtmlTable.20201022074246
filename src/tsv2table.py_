@@ -58,10 +58,9 @@ class Cell:
             print()
         self.__LeftTopSpanLen()
         self.__ColspanStopByRowspan()
-#        self.__ColspanLengthRetry()
-        self.__RowspanStopByColspan()
+        self.__ColspanLengthRetry()
+#        self.__RowspanStopByColspan()
 #        self.__RowspanLengthRetry()
-        self.__CrossSpanHeader()
         self.__ZeroRect()
 
         for ri in range(len(self.__spanLenMap)):
@@ -81,34 +80,6 @@ class Cell:
             if 0 == self.__textLenMap[ri][ci+col_len]: col_len += 1
             else: break
         return col_len
-
-    def __CrossSpanHeader(self):
-        self.__CrossSpanR()
-        self.__CrossSpanC()
-    def __CrossSpanR(self):
-        for ri in range(self.RowHeaderNum):
-            for ci in range(len(self.__spanLenMap[ri])):
-                if 1 < self.__spanLenMap[ri][ci][1]:
-                    C = self.__CrossSpanRC(ri, ci, self.__spanLenMap[ri][ci][1])
-                    if C is not None: self.__spanLenMap[ri][ci][1] = C
-    def __CrossSpanRC(self, ri, ci, cs):
-        for C in range(ci+1, ci+cs):
-            for R in reversed(range(ri)):
-                if ri <= self.__spanLenMap[R][C][0] - 1 - R + ri: return C - ci
-        return None
-    def __CrossSpanC(self):
-        for ri in range(self.RowHeaderNum, len(self.__spanLenMap)):
-            for ci in range(self.ColumnHeaderNum):
-                if 1 < self.__spanLenMap[ri][ci][0]:
-                    R = self.__CrossSpanCR(ri, ci, self.__spanLenMap[ri][ci][0])
-                    if R is not None: self.__spanLenMap[ri][ci][0] = R
-    def __CrossSpanCR(self, ri, ci, rs):
-        for R in range(ri+1, ri+rs):
-            for C in reversed(range(ci)):
-                if ci <= self.__spanLenMap[R][C][1] - 1 - C + ci: return R - ri
-        return None
-
-        
 #    def __isZeroRect(self, ri, ci, rs, cs):
 #        if 1 < rs and 1 < cs:
 #            for R in range(ri, ri+rs):
@@ -170,7 +141,7 @@ class Cell:
     def __RowspanStopByColspan(self):
         for ri in range(len(self.__spanLenMap)):
             for ci in range(len(self.__spanLenMap[ri])):
-                self.__setRowspanMinus(ri, ci, self.__spanLenMap[ri][ci][1])
+                self.__setColspanMinus(ri, ci, self.__spanLenMap[ri][ci][1])
     def __setRowspanMinus(self, ri, ci, clen):
         if 1 < self.__spanLenMap[ri][ci][1]:
             for C in range(ci+1, ci+clen):

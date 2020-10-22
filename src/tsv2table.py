@@ -3,6 +3,7 @@
 import argparse
 import csv
 import sys
+
 class TsvToTable:
     def __init__(self): pass
     def parse(self):
@@ -14,12 +15,27 @@ class TsvToTable:
         parser.add_argument('-c', '--column', default='r', help='列ヘッダの表示位置')
         parser.add_argument('-m', '--merge', action='store_false', help='セル結合しない。')
         self.__args = parser.parse_args()
-        Cell().merge(self.__stdin)
+
+        cell = Cell()
+        cell.merge(self.__stdin)
+        return ToTable(cell).make()
 class Cell:
     def __init__(self):
         self.__textMap = []
         self.__textLenMap = []
         self.__spanLenMap = []
+        self.__row_header_num = 0
+        self.__col_header_num = 0
+    @property
+    def RowHeaderNum(self): return self.__row_header_num
+    @property
+    def ColumnHeaderNum(self): return self.__col_header_num
+    @property
+    def TextMap(self): return self.__textMap
+    @property
+    def TextLenMap(self): return self.__textLenMap
+    @property
+    def SpanLenMap(self): return self.__spanLenMap
     def merge(self, tsv):
         self.__calcTextLen(tsv)
         self.__calcSpanLen()
@@ -37,7 +53,6 @@ class Cell:
                 else:
                     rs = self.__RowSpanLen(ri, ci)
                     cs = self.__ColSpanLen(ri, ci)
-#                    print('rc:', rs, cs)
                     if self.__isZeroRect(ri, ci, rs, cs): self.__spanLenMap[-1].append((rs,cs))
                     else: self.__spanLenMap[-1].append((1,1))
                 print(self.__spanLenMap[-1][-1], end=',')
@@ -70,17 +85,46 @@ class Cell:
         if self.__isZeroRect(0, 0, rs, cs):
             self.__spanLenMap[0].pop(0)
             self.__spanLenMap[0].insert(0, (rs,cs))
+            self.__row_header_num = rs
+            self.__col_header_num = cs
 
 class ToTable:
-    def to_table(self, textMap, spanMap):
-        for sr in spanMap:
-            for sc in spanMap[sr]:
-                pass
+    def __init__(self, cell):
+        self.cell = cell
+    def make(self):
+        return Html.enclose('table', self.__make_row_header() + self.__make_body())
+    def __make_row_header(self):
+        html = ''
+        for ri in range(len(self.cell.TextMap)):
+            tr = ''
+            for ci in range(len(self.cell.TextMap[ri])):
+                if (0,0) == self.cell.SpanLenMap[ri][ci]: continue
+                tr += Html.enclose('th', self.cell.TextMap[ri][ci], self.__make_attr(ri, ci))
+            html += Html.enclose('tr', tr)
+        return html
+    def __make_body(self):
+        html = ''
+        for ri in range(self.cell.RowHeaderNum, len(self.cell.TextMap)-self.cell.RowHeaderNum):
+            th = ''
+            td = ''
+            for chi in range(self.cell.ColumnHeaderNum):
+                if (0,0) == self.cell.SpanLenMap[ri][chi]: continue
+                th += Html.enclose('th', self.cell.TextMap[ri][chi], self.__make_attr(ri, chi))
+            for cdi in range(self.cell.ColumnHeaderNum, len(self.cell.TextMap)):
+                if (0,0) == self.cell.SpanLenMap[ri][chi]: continue
+                td += Html.enclose('td', self.cell.TextMap[ri][cdi], self.__make_attr(ri, cdi))
+            html += Html.enclose('tr', th+td)
+        return html
+    def __make_attr(self, ri, ci):
+        attrs = {}
+        if 1 < self.cell.SpanLenMap[ri][ci][0]: attrs['rowspan'] = self.cell.SpanLenMap[ri][ci][0]
+        if 1 < self.cell.SpanLenMap[ri][ci][1]: attrs['colspan'] = self.cell.SpanLenMap[ri][ci][1]
+        return attrs
+#        attrs = ''
+#        if 1 < self.cell.SpanLenMap[ri][ci][0]: attrs += ' rowspan="' + self.cell.SpanLenMap[ri][ci][0] + '"'
+#        if 1 < self.cell.SpanLenMap[ri][ci][1]: attrs += ' colspan="' + self.cell.SpanLenMap[ri][ci][1] + '"'
+#        return attrs
 
-        
-#    def __make_row_header(self):
-        
-#    def __make_body(self):
 #    def __make_col_header(self):
 #    def __make_data_line(self):
 
@@ -96,4 +140,4 @@ class Html:
         return result
 
 if __name__ == '__main__':
-    TsvToTable().parse()
+    print(TsvToTable().parse())

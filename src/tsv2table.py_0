@@ -3,8 +3,6 @@
 import argparse
 import csv
 import sys
-import numpy
-from abc import ABCMeta, abstractmethod
 
 class TsvToTable:
     def __init__(self): pass
@@ -21,171 +19,17 @@ class TsvToTable:
         cell = Cell()
         cell.merge(self.__stdin)
         return ToTable(cell).make()
-
-class Header:
-    def __init__(self):
-        self.__row_num = 0
-        self.__col_num = 0
-    @property
-    def RowNum(self): return self.__row_num
-    @property
-    def ColNum(self): return self.__col_num
-    # 1行目1列目が空なら列ヘッダがある
-    # 1行目の何列目かに空があれば複数の行ヘッダがある
-    # それ以外なら1行目は行ヘッダであり列ヘッダなしとする
-    def infer(self, textLenMap):
-        self.__col_num = self.__inferColumnHeaderNum(textLenMap)
-        self.__row_num = self.__inferRowHeaderNum(textLenMap)
-    def __inferColumnHeaderNum(self, textLenMap):
-        col_len = 0
-        for ci, col in enumerate(textLenMap[0]):
-            if 0 == col: col_len += 1
-            else: break
-        return col_len
-    def __inferRowHeaderNum(self, textLenMap):
-        is_exist_map = numpy.full(len(textLenMap), False)
-        for ri, row in enumerate(textLenMap):
-            for ci, col in enumerate(textLenMap[ri]):
-                if not 0 == col: is_exist_map[ci] = True
-            if all(is_exist_map): return ri if 0 < ri else 1
-
-class RowHeader:
-    def __init__(self, textLenMap):
-        self.__len = self.__inferLength(textLenMap)
-        self.__calcSpanMap(textLenMap)
-    @property
-    def Length(self): return self.__len
-    @property
-    def SpanMap(self): return self.__spanMap
-    def __inferLength(self, textLenMap):
-        is_exist_map = numpy.full(len(textLenMap), False)
-        for ri, row in enumerate(textLenMap):
-            for ci, col in enumerate(textLenMap[ri]):
-                if not 0 == col: is_exist_map[ci] = True
-            if all(is_exist_map): return ri if 0 < ri else 1
-    def __calcSpanMap(self, textLenMap):
-        self.__spanLenMap = []
-        for ri in range(self.Length):
-            self.__spanLenMap.append([])
-            for ci in range(len(textLenMap[ri])):
-                if 0 == textLenMap[ri][ci]: self.__spanLenMap[-1].append([0,0])
-                else:
-#                    rs = self.__RowSpanLen(ri, ci)
-#                    cs = self.__ColSpanLen(ri, ci)
-                    rs = Merger.getRowZeroLen(textLenMap, ri, ci)
-                    cs = Merger.getColZeroLen(textLenMap, ri, ci)
-                    self.__spanLenMap[-1].append([rs,cs])
-                print(self.__spanLenMap[-1][-1], end=',')
-            print()
-        self.__LeftTopSpanLen(textLenMap)
-        Merger.setColspanStopByRowspan(self.__spanLenMap)
-        Merger.setRowspanStopByColspan(self.__spanLenMap)
-#        self.__ColspanStopByRowspan()
-#        self.__RowspanStopByColspan()
-#        self.__CrossSpanHeader()
-#        self.__ZeroRect()
-        print()
-        for ri in range(len(self.__spanLenMap)):
-            print(*self.__spanLenMap[ri])
-
-    def __LeftTopSpanLen(self, textLenMap):
-        if 0 == self.__spanLenMap[0][0][0] and 0 == self.__spanLenMap[0][0][1]:
-            rs = Merger.getRowZeroLen(textLenMap, 0, 0)
-            cs = Merger.getColZeroLen(textLenMap, 0, 0)
-            if Merger.isZeroRect(textLenMap, 0, 0, rs, cs):
-                self.__spanLenMap[0][0][0] = rs
-                self.__spanLenMap[0][0][1] = cs
-
-class ColumnHeader:
-    def __init__(self, textLenMap):
-        self.__len = self.__inferLength(textLenMap)
-        self.__calcSpanMap(textLenMap)
-    @property
-    def Length(self): return self.__len
-    @property
-    def SpanMap(self): return self.__spanMap
-    def __inferLength(self, textLenMap):
-        col_len = 0
-        for ci, col in enumerate(textLenMap[0]):
-            if 0 == col: col_len += 1
-            else: break
-        return col_len
-    def __calcSpanMap(self, textLenMap):
-        self.__spanLenMap = []
-        for ri in range(self.RowHeaderNum, len(textLenMap)):
-            self.__spanLenMap.append([])
-            for ci in range(self.ColumnHeaderNum):
-                if 0 == self.__spanLenMap[ri][ci]: self.__spanLenMap[-1].append([0,0])
-                else:
-#                    rs = self.__RowSpanLen(ri, ci)
-#                    cs = self.__ColSpanLen(ri, ci)
-                    rs = Merger.getRowZeroLen(textLenMap, ri, ci)
-                    cs = Merger.getColZeroLen(textLenMap, ri, ci)
-                    self.__spanLenMap[-1].append([rs,cs])
-                print(self.__spanLenMap[-1][-1], end=',')
-            print()
-#        self.__LeftTopSpanLen()
-#        self.__ColspanStopByRowspan()
-#        self.__RowspanStopByColspan()
-#        self.__CrossSpanHeader()
-#        self.__ZeroRect()
-
-class Merger:
-    @staticmethod
-    def getRowZeroLen(textLenMap, ri, ci):
-        row_len = 1
-        if len(textLenMap) <= ri+row_len: return row_len
-        while ri+row_len < len(textLenMap):
-            if 0 == textLenMap[ri+row_len][ci]: row_len += 1
-            else: break
-        return row_len
-    @staticmethod
-    def getColZeroLen(textLenMap, ri, ci):
-        col_len = 1
-        if len(textLenMap[ri]) <= ci+col_len: return col_len
-        while ci+col_len < len(textLenMap[ri]):
-            if 0 == textLenMap[ri][ci+col_len]: col_len += 1
-            else: break
-        return col_len
-    @staticmethod
-    def isZeroRect(textLenMap, ri, ci, rs, cs):
-        if 1 < rs and 1 < cs:
-            for R in range(ri, ri+rs):
-                for C in range(ci, ci+cs):
-                    if not 0 == textLenMap[R][C]: return False
-        return True
-    @staticmethod
-    def setColspanStopByRowspan(spanLenMap):
-        for ri in range(len(spanLenMap)):
-            for ci in range(len(spanLenMap[ri])):
-                Merger.__setColspanMinus(spanLenMap, ri, ci, spanLenMap[ri][ci][0])
-    @staticmethod
-    def __setColspanMinus(spanLenMap, ri, ci, rlen):
-        if 1 < spanLenMap[ri][ci][0]:
-            for R in range(ri+1, ri+rlen):
-                spanLenMap[R][ci][1] = -1
-    @staticmethod
-    def setRowspanStopByColspan(spanLenMap):
-        for ri in range(len(spanLenMap)):
-            for ci in range(len(spanLenMap[ri])):
-                Merger.__setRowspanMinus(spanLenMap, ri, ci, spanLenMap[ri][ci][1])
-    @staticmethod
-    def __setRowspanMinus(spanLenMap, ri, ci, clen):
-        if 1 < spanLenMap[ri][ci][1]:
-            for C in range(ci+1, ci+clen):
-                spanLenMap[ri][C][0] = -1
-
-
 class Cell:
     def __init__(self):
         self.__textMap = []
         self.__textLenMap = []
         self.__spanLenMap = []
-        self.__header = Header()
+        self.__row_header_num = 0
+        self.__col_header_num = 0
     @property
-    def RowHeaderNum(self): return self.__header.RowNum
+    def RowHeaderNum(self): return self.__row_header_num
     @property
-    def ColumnHeaderNum(self): return self.__header.ColNum
+    def ColumnHeaderNum(self): return self.__col_header_num
     @property
     def TextMap(self): return self.__textMap
     @property
@@ -194,36 +38,13 @@ class Cell:
     def SpanLenMap(self): return self.__spanLenMap
     def merge(self, tsv):
         self.__calcTextLen(tsv)
-#        self.__calcSpanLen()
-        self.__calcHeaderSpanLen()
+        self.__calcSpanLen()
     def __calcTextLen(self, tsv):
         for cols in csv.reader(tsv, delimiter='\t'):
             self.__textMap.append([ col for col in cols ])
             self.__textLenMap.append([ len(col) for col in cols ])
         print(self.__textMap)
         print(self.__textLenMap)
-#        self.__header.infer(self.__textLenMap)
-#        print(self.RowHeaderNum, self.ColumnHeaderNum)
-        rh = RowHeader(self.__textLenMap)
-#        ch = ColumnHeader(self.__textLenMap)
-
-
-    def __calcHeaderSpanLen(self):
-        for ri in range(self.RowHeaderNum):
-            for ci in range(self.ColumnHeaderNum):
-                if 0 == self.__spanLenMap[ri][ci]: self.__spanLenMap[-1].append([0,0])
-                else:
-                    rs = self.__RowSpanLen(ri, ci)
-                    cs = self.__ColSpanLen(ri, ci)
-                    self.__spanLenMap[-1].append([rs,cs])
-                print(self.__spanLenMap[-1][-1], end=',')
-            print()
-        self.__LeftTopSpanLen()
-        self.__ColspanStopByRowspan()
-        self.__RowspanStopByColspan()
-        self.__CrossSpanHeader()
-        self.__ZeroRect()
-                
     def __calcSpanLen(self):
         for ri, row in enumerate(self.__textLenMap):
             self.__spanLenMap.append([])
@@ -237,11 +58,11 @@ class Cell:
             print()
         self.__LeftTopSpanLen()
         self.__ColspanStopByRowspan()
+#        self.__ColspanLengthRetry()
         self.__RowspanStopByColspan()
+#        self.__RowspanLengthRetry()
         self.__CrossSpanHeader()
         self.__ZeroRect()
-#        self.__ColspanLengthRetry()
-#        self.__RowspanLengthRetry()
 
         print()
         for ri in range(len(self.__spanLenMap)):
@@ -307,6 +128,8 @@ class Cell:
             if self.__isZeroRect(0, 0, rs, cs):
                 self.__spanLenMap[0][0][0] = rs
                 self.__spanLenMap[0][0][1] = cs
+                self.__row_header_num = rs
+                self.__col_header_num = cs
 
 
     def __setSpanStop(self):

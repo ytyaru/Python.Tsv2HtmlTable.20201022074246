@@ -6,7 +6,7 @@ import sys
 import numpy
 from abc import ABCMeta, abstractmethod
 
-class CLI:
+class TsvToTable:
     def __init__(self): pass
     def parse(self):
         self.__stdin = [line.rstrip('\n') for line in sys.stdin.readlines()]
@@ -18,35 +18,9 @@ class CLI:
         parser.add_argument('-m', '--merge', action='store_false', help='セル結合しない。')
         self.__args = parser.parse_args()
 
-        tsv = TSV()
-        tsv.parse(self.__stdin)
-        return ToTable(tsv).make()
-#        cell = Cell()
-#        cell.merge(self.__stdin)
-#        return ToTable(cell).make()
-
-class TSV:
-    def __init__(self):
-        self.__textMap = []
-        self.__textLenMap = []
-    def parse(self, tsv):
-        self.__textMap.clear()
-        self.__textLenMap.clear()
-        for cols in csv.reader(tsv, delimiter='\t'):
-            self.__textMap.append([ col for col in cols ])
-            self.__textLenMap.append([ len(col) for col in cols ])
-        print(self.__textMap)
-        print(self.__textLenMap)
-        self.__row_header = RowHeader(self.__textLenMap)
-        self.__col_header = ColumnHeader(self.__textLenMap, self.__row_header.Length)
-    @property
-    def Map(self): return self.__textMap
-    @property
-    def LenMap(self): return self.__textLenMap
-    @property
-    def RowHeader(self): return self.__row_header
-    @property
-    def ColHeader(self): return self.__col_header
+        cell = Cell()
+        cell.merge(self.__stdin)
+        return ToTable(cell).make()
 
 class RowHeader:
     def __init__(self, textLenMap):
@@ -55,7 +29,7 @@ class RowHeader:
     @property
     def Length(self): return self.__len
     @property
-    def SpanLenMap(self): return self.__spanLenMap
+    def SpanMap(self): return self.__spanMap
     def __inferLength(self, textLenMap):
         is_exist_map = numpy.full(len(textLenMap), False)
         for ri, row in enumerate(textLenMap):
@@ -117,7 +91,7 @@ class ColumnHeader:
     @property
     def Length(self): return self.__len
     @property
-    def SpanLenMap(self): return self.__spanLenMap
+    def SpanMap(self): return self.__spanMap
     def __inferLength(self, textLenMap):
         col_len = 0
         for ci, col in enumerate(textLenMap[0]):
@@ -436,35 +410,44 @@ class Cell:
                     self.__spanLenMap[R][C][1] = 1
 
 class ToTable:
-    def __init__(self, tsv):
-        self.tsv = tsv
+    def __init__(self, cell):
+        self.cell = cell
     def make(self):
         return Html.enclose('table', self.__make_row_header() + self.__make_body())
     def __make_row_header(self):
         html = ''
-        for ri in range(self.tsv.RowHeader.Length):
+        for ri in range(self.cell.RowHeaderNum):
             tr = ''
-            for ci in range(len(self.tsv.RowHeader.SpanLenMap[ri])):
-                if self.tsv.RowHeader.SpanLenMap[ri][ci][0] < 1 and self.tsv.RowHeader.SpanLenMap[ri][ci][1] < 1: continue
-                tr += Html.enclose('th', self.tsv.Map[ri][ci], self.__make_attr(self.tsv.RowHeader.SpanLenMap, ri, ci))
+            for ci in range(len(self.cell.TextMap[ri])):
+                if self.cell.SpanLenMap[ri][ci][0] < 1 and self.cell.SpanLenMap[ri][ci][1] < 1: continue
+                tr += Html.enclose('th', self.cell.TextMap[ri][ci], self.__make_attr(ri, ci))
             html += Html.enclose('tr', tr)
         return html
     def __make_body(self):
         html = ''
-        for ri in range(len(self.tsv.ColHeader.SpanLenMap)):
-            tr = ''
-            for chi in range(self.tsv.ColHeader.Length):
-                if self.tsv.ColHeader.SpanLenMap[ri][chi][0] < 1 and self.tsv.ColHeader.SpanLenMap[ri][chi][1] < 1: continue
-                tr += Html.enclose('th', self.tsv.Map[ri+self.tsv.RowHeader.Length][chi], self.__make_attr(self.tsv.ColHeader.SpanLenMap, ri, chi))
-            for cdi in range(self.tsv.ColHeader.Length, len(self.tsv.Map)):
-                tr += Html.enclose('td', self.tsv.Map[ri+self.tsv.RowHeader.Length][cdi])
-            html += Html.enclose('tr', tr)
+        for ri in range(self.cell.RowHeaderNum, len(self.cell.TextMap)):
+            th = ''
+            td = ''
+            for chi in range(self.cell.ColumnHeaderNum):
+                if self.cell.SpanLenMap[ri][chi][0] < 1 and self.cell.SpanLenMap[ri][chi][1] < 1: continue
+                th += Html.enclose('th', self.cell.TextMap[ri][chi], self.__make_attr(ri, chi))
+            for cdi in range(self.cell.ColumnHeaderNum, len(self.cell.TextMap)):
+                if self.cell.SpanLenMap[ri][cdi][0] < 1 and self.cell.SpanLenMap[ri][cdi][1] < 1: continue
+                td += Html.enclose('td', self.cell.TextMap[ri][cdi], self.__make_attr(ri, cdi))
+            html += Html.enclose('tr', th+td)
         return html
-    def __make_attr(self, spanLenMap, ri, ci):
+    def __make_attr(self, ri, ci):
         attrs = {}
-        if 1 < spanLenMap[ri][ci][0]: attrs['rowspan'] = spanLenMap[ri][ci][0]
-        if 1 < spanLenMap[ri][ci][1]: attrs['colspan'] = spanLenMap[ri][ci][1]
+        if 1 < self.cell.SpanLenMap[ri][ci][0]: attrs['rowspan'] = self.cell.SpanLenMap[ri][ci][0]
+        if 1 < self.cell.SpanLenMap[ri][ci][1]: attrs['colspan'] = self.cell.SpanLenMap[ri][ci][1]
         return attrs
+#        attrs = ''
+#        if 1 < self.cell.SpanLenMap[ri][ci][0]: attrs += ' rowspan="' + self.cell.SpanLenMap[ri][ci][0] + '"'
+#        if 1 < self.cell.SpanLenMap[ri][ci][1]: attrs += ' colspan="' + self.cell.SpanLenMap[ri][ci][1] + '"'
+#        return attrs
+
+#    def __make_col_header(self):
+#    def __make_data_line(self):
 
 class Html:
     @staticmethod
@@ -478,4 +461,4 @@ class Html:
         return result
 
 if __name__ == '__main__':
-    print(CLI().parse())
+    print(TsvToTable().parse())

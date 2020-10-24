@@ -132,6 +132,7 @@ class ColumnHeader:
     def __init__(self, textLenMap, row_header_len):
         self.__row_header_len = row_header_len
         self.__len = self.__inferLength(textLenMap)
+        print('col_len=', self.__len)
         self.__calcSpanMap(textLenMap)
     @property
     def Length(self): return self.__len
@@ -139,11 +140,26 @@ class ColumnHeader:
     def SpanLenMap(self): return self.__spanLenMap
     def __inferLength(self, textLenMap):
         col_len = 0
-        for ci, col in enumerate(textLenMap[0]):
-            if 0 == col: col_len += 1
-            else: break
-        if 0 == self.__row_header_len and 0 == col_len: return 1
-        else: return col_len
+        if 0 < self.__row_header_len:
+            for ci, col in enumerate(textLenMap[0]):
+                if 0 == col: col_len += 1
+                else: break
+            if 0 == self.__row_header_len and 0 == col_len: return 1
+            else: return col_len
+        else:
+#            is_exist_map = numpy.full(len(textLenMap[0]), False)
+            is_exist_map = numpy.full(len(textLenMap)-self.__row_header_len, False)
+            for ci in range(len(textLenMap[0])):
+                for ri in range(self.__row_header_len, len(textLenMap)):
+                    if not 0 == textLenMap[ri][ci]: is_exist_map[ri] = True
+#                    if 0 == textLenMap[ri][ci]: break
+#                    else: is_exist_map[ri] = True
+#                    if not 0 == textLenMap[ri][ci]: is_exist_map[ci] = True
+#                    else: break
+                print(is_exist_map)
+                if all(is_exist_map): return col_len+1
+                col_len += 1
+
     def __calcSpanMap(self, textLenMap):
         self.__spanLenMap = []
         for ri in range(self.__row_header_len, len(textLenMap)):

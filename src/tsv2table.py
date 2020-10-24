@@ -82,6 +82,7 @@ class RowHeader:
 #        self.__ColspanStopByRowspan()
 #        self.__RowspanStopByColspan()
         self.__CrossSpanHeader()
+        Merger.setZeroRect(self.__spanLenMap)
 #        self.__ZeroRect()
         print()
         for ri in range(len(self.__spanLenMap)):
@@ -144,6 +145,7 @@ class ColumnHeader:
 #        self.__ColspanStopByRowspan()
 #        self.__RowspanStopByColspan()
         self.__CrossSpanHeader()
+        Merger.setZeroRect(self.__spanLenMap)
 #        self.__ZeroRect()
         print()
         for ri in range(len(self.__spanLenMap)):
@@ -219,6 +221,29 @@ class Merger:
         if 1 < spanLenMap[ri][ci][1]:
             for C in range(ci+1, ci+clen):
                 spanLenMap[ri][C][0] = -1
+    @staticmethod
+    def setZeroRect(spanLenMap):
+        for ri in range(len(spanLenMap)):
+            for ci in range(len(spanLenMap[ri])):
+                if not Merger.__isZeroRect(spanLenMap, ri, ci, *spanLenMap[ri][ci]):
+                    Merger.__setSpanAllOne(spanLenMap, ri, ci, *spanLenMap[ri][ci])
+    @staticmethod
+    def __isZeroRect(spanLenMap, ri, ci, rs, cs):
+        if 1 < rs and 1 < cs:
+            for R in range(ri, ri+rs):
+                for C in range(ci, ci+cs):
+#                    if not 0 == self.__textLenMap[R][C]: return False
+                    if not (spanLenMap[R][C][0] < 1 and spanLenMap[R][C][1] < 1): return False
+        return True
+    @staticmethod
+    def __setSpanAllOne(spanLenMap, ri, ci, rs, cs):
+        spanLenMap[ri][ci][0] = 1
+        spanLenMap[ri][ci][1] = 1
+        for R in range(ri, ri+rs):
+            for C in range(ci, ci+cs):
+                if spanLenMap[R][C][0] < 1 and spanLenMap[R][C][1] < 1:
+                    spanLenMap[R][C][0] = 1
+                    spanLenMap[R][C][1] = 1
 
 
 class Cell:

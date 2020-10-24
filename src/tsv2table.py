@@ -9,33 +9,48 @@ from abc import ABCMeta, abstractmethod
 class CLI:
     def __init__(self): pass
     def parse(self):
-        self.__stdin = [line.rstrip('\n') for line in sys.stdin.readlines()]
+#        self.__stdin = [line.rstrip('\n') for line in sys.stdin.readlines()]
 #        print(self.__stdin)
-        parser = argparse.ArgumentParser(description='このプログラムの説明（なくてもよい）')
+        parser = argparse.ArgumentParser(description='TSVをHTMLのtableタグに変換する。')
         parser.add_argument('-H', '--header', default='a', help='ヘッダ形式')
-        parser.add_argument('-r', '--row', default='r', help='行ヘッダの表示位置')
-        parser.add_argument('-c', '--column', default='r', help='列ヘッダの表示位置')
+        parser.add_argument('-r', '--row', default='t', choices=['t', 'top', 'b', 'bottom', 'B', 'both'], help='行ヘッダの表示位置')
+        parser.add_argument('-c', '--column', default='l', choices=['l', 'left', 'r', 'right', 'B', 'both'], help='列ヘッダの表示位置')
         parser.add_argument('-m', '--merge', action='store_false', help='セル結合しない。')
         self.__args = parser.parse_args()
 
+        self.__stdin = [line.rstrip('\n') for line in sys.stdin.readlines()]
         
+        pos = self.__getHeaderPos()
         tsv = self.__getTsv()
-        tsv.parse(self.__stdin)
+        tsv.parse(self.__stdin, **pos)
 #        print(tsv.ColHeader.Length)
-        return ToTable(tsv).make()
+#        return ToTable(tsv).make()
+        return ToTable(tsv, **pos).make()
     def __getTsv(self):
         if self.__args.header.lower() in ['a','auto','r','row','m','matrix']:
             return TSV()
         elif self.__args.header.lower() in ['c','col','column']:
             return TSV(hasRowHeader=False)
         else: return TSV()
+    def __getHeaderPos(self):
+        pos = {}
+        if   self.__args.row in ['t','top']: pos['row_header_pos'] = 'top'
+        elif self.__args.row in ['b','bottom']: pos['row_header_pos'] = 'bottom'
+        elif self.__args.row in ['B','both']: pos['row_header_pos'] = 'both'
+        else: pos['row_header_pos'] = 'top'
+        if   self.__args.column in ['l','left']: pos['col_header_pos'] = 'left'
+        elif self.__args.column in ['r','right']: pos['col_header_pos'] = 'right'
+        elif self.__args.column in ['B','both']: pos['col_header_pos'] = 'both'
+        else: pos['col_header_pos'] = 'left'
+        return pos
+
 
 class TSV:
     def __init__(self, hasRowHeader=True):
         self.__textMap = []
         self.__textLenMap = []
         self.__hasRowHeader = hasRowHeader
-    def parse(self, tsv):
+    def parse(self, tsv, row_header_pos, col_header_pos):
         self.__textMap.clear()
         self.__textLenMap.clear()
         for cols in csv.reader(tsv, delimiter='\t'):
@@ -47,6 +62,11 @@ class TSV:
 #        print(self.__textLenMap)
         self.__row_header = RowHeader(self.__textLenMap, self.__hasRowHeader)
         self.__col_header = ColumnHeader(self.__textLenMap, self.__row_header.Length)
+        self.__mat_header = MatrixHeader(self.__textLenMap, 
+                                         row_header_pos, 
+                                         col_header_pos, 
+                                         self.__row_header.Length, 
+                                         self.__col_header.Length)
     @property
     def Map(self): return self.__textMap
     @property
@@ -55,6 +75,34 @@ class TSV:
     def RowHeader(self): return self.__row_header
     @property
     def ColHeader(self): return self.__col_header
+    @property
+    def MatrixHeader(self): return self.__mat_header
+
+class MatrixHeader:
+    def __init__(self, textLenMap, row_header_pos, col_header_pos, row_len, col_len):
+        self.__row_pos = row_header_pos
+        self.__col_pos = col_header_pos
+        if row_len < 1 or col_len < 1: self.__size = (0,0)
+        else: self.__size = self.__getSize(textLenMap)
+        self.__setPos()
+    def __getSize(self, textLenMap):
+        rs = Merger.getRowZeroLen(textLenMap, 0, 0)
+        cs = Merger.getColZeroLen(textLenMap, 0, 0)
+        return (rs, cs)
+    def __setPos(self):
+        self.__pos = numpy.full((2,2), False)
+        if self.__row_pos in ['top', 'both'] and self.__col_pos in ['left', 'both']:
+            self.__pos[0][0] = True
+        if self.__row_pos in ['top', 'both'] and self.__col_pos in ['right', 'both']:
+            self.__pos[0][1] = True
+        if self.__row_pos in ['bottom', 'both'] and self.__col_pos in ['left', 'both']:
+            self.__pos[1][0] = True
+        if self.__row_pos in ['bottom', 'both'] and self.__col_pos in ['right', 'both']:
+            self.__pos[1][1] = True
+    @property
+    def Size(self): return self.__size
+    @property
+    def Pos(self): return self.__pos
 
 class RowHeader:
     def __init__(self, textLenMap, hasRowHeader=True):
@@ -74,6 +122,7 @@ class RowHeader:
         for ci in range(len(textLenMap[0])):
             if 0 == textLenMap[0][ci]: blank_len += 1
             else: break
+        self.__blank_len = blank_len
 #        print('blank_len=', blank_len)
         is_exist_map = numpy.full(len(textLenMap[0])-blank_len, False)
 #        print(is_exist_map)
@@ -88,23 +137,32 @@ class RowHeader:
         self.__spanLenMap = []
         for ri in range(self.Length):
             self.__spanLenMap.append([])
+#            for ci in range(self.__blank_len, len(textLenMap[ri])):
             for ci in range(len(textLenMap[ri])):
+#                if ci < self.__blank_len: continue
                 if 0 == textLenMap[ri][ci]: self.__spanLenMap[-1].append([0,0])
                 else:
                     rs = Merger.getRowZeroLen(textLenMap, ri, ci)
                     cs = Merger.getColZeroLen(textLenMap, ri, ci)
                     self.__spanLenMap[-1].append([rs,cs])
-#                print(self.__spanLenMap[-1][-1], end=',')
-#            print()
-        self.__LeftTopSpanLen(textLenMap)
+                print(self.__spanLenMap[-1][-1], end=',')
+            print()
+        self.__removeMatrixHeader()
+#        self.__LeftTopSpanLen(textLenMap)
         Merger.setColspanStopByRowspan(self.__spanLenMap)
         Merger.setRowspanStopByColspan(self.__spanLenMap)
         self.__CrossSpanHeader()
         Merger.setZeroRect(self.__spanLenMap)
-#        print()
-#        for ri in range(len(self.__spanLenMap)):
-#            print(*self.__spanLenMap[ri])
+        print()
+        for ri in range(len(self.__spanLenMap)):
+            print(*self.__spanLenMap[ri])
 
+    def __removeMatrixHeader(self):
+        for ri in range(self.Length):
+            del self.__spanLenMap[ri][:self.__blank_len]
+#            for ci in range(self.__blank_len):
+#                self.__spanLenMap[ri].pop(ci)
+        
     def __LeftTopSpanLen(self, textLenMap):
         if 0 == self.__spanLenMap[0][0][0] and 0 == self.__spanLenMap[0][0][1]:
             rs = Merger.getRowZeroLen(textLenMap, 0, 0)
@@ -258,30 +316,56 @@ class Merger:
                     spanLenMap[R][C][1] = 1
 
 class ToTable:
-    def __init__(self, tsv):
+    def __init__(self, tsv, row_header_pos='top', col_header_pos='left'):
         self.tsv = tsv
+        self.__col_header_pos = col_header_pos.lower()
+        self.__row_header_pos = row_header_pos.lower()
+        print(self.__row_header_pos,  self.__col_header_pos)
     def make(self):
-        return HTML.enclose('table', self.__make_row_header() + self.__make_body())
-    def __make_row_header(self):
         html = ''
-        for ri in range(self.tsv.RowHeader.Length):
+        if self.__row_header_pos in ['top', 'both']: html += self.__make_row_header()
+        html += self.__make_body()
+        if self.__row_header_pos in ['bottom', 'both']: html += self.__make_row_header(isReverse=True)
+        return HTML.enclose('table', html)
+#        return HTML.enclose('table', self.__make_row_header() + self.__make_body())
+    def __make_row_header(self, isReverse=False):
+        html = ''
+        if self.tsv.MatrixHeader.Pos[0][0] and isReverse == False:
+            html += HTML.enclose('th', '', {'rowspan': self.tsv.MatrixHeader.Size[0], 'colspan': self.tsv.MatrixHeader.Size[1]})
+#        print(self.tsv.RowHeader.Length, len(self.tsv.RowHeader.SpanLenMap[ri]))
+        for ri in reversed(range(self.tsv.RowHeader.Length)) if isReverse else range(self.tsv.RowHeader.Length):
+#        for ri in range(self.tsv.RowHeader.Length):
             tr = ''
+#            for ci in reversed(range(len(self.tsv.RowHeader.SpanLenMap[ri]))) if isReverse else range(len(self.tsv.RowHeader.SpanLenMap[ri])):
             for ci in range(len(self.tsv.RowHeader.SpanLenMap[ri])):
                 if self.tsv.RowHeader.SpanLenMap[ri][ci][0] < 1 and self.tsv.RowHeader.SpanLenMap[ri][ci][1] < 1: continue
-                tr += HTML.enclose('th', self.tsv.Map[ri][ci], self.__make_attr(self.tsv.RowHeader.SpanLenMap, ri, ci))
+#                tr += HTML.enclose('th', self.tsv.Map[ri][ci], self.__make_attr(self.tsv.RowHeader.SpanLenMap, ri, ci))
+                tr += HTML.enclose('th', self.tsv.Map[ri][ci+self.tsv.MatrixHeader.Size[1]], self.__make_attr(self.tsv.RowHeader.SpanLenMap, ri, ci))
             html += HTML.enclose('tr', tr)
+        if self.tsv.MatrixHeader.Pos[0][1] and isReverse == True:
+            html += HTML.enclose('th', '', {'rowspan': self.tsv.MatrixHeader.Size[0], 'colspan': self.tsv.MatrixHeader.Size[1]})
         return html
     def __make_body(self):
         html = ''
         for ri in range(len(self.tsv.ColHeader.SpanLenMap)):
             tr = ''
-            for chi in range(self.tsv.ColHeader.Length):
-                if self.tsv.ColHeader.SpanLenMap[ri][chi][0] < 1 and self.tsv.ColHeader.SpanLenMap[ri][chi][1] < 1: continue
-                tr += HTML.enclose('th', self.tsv.Map[ri+self.tsv.RowHeader.Length][chi], self.__make_attr(self.tsv.ColHeader.SpanLenMap, ri, chi))
+            if self.__col_header_pos in ['left', 'both']: tr += self.__make_body_th(ri)
+#            for chi in range(self.tsv.ColHeader.Length):
+#                if self.tsv.ColHeader.SpanLenMap[ri][chi][0] < 1 and self.tsv.ColHeader.SpanLenMap[ri][chi][1] < 1: continue
+#                tr += HTML.enclose('th', self.tsv.Map[ri+self.tsv.RowHeader.Length][chi], self.__make_attr(self.tsv.ColHeader.SpanLenMap, ri, chi))
             for cdi in range(self.tsv.ColHeader.Length, len(self.tsv.Map[ri])):
                 tr += HTML.enclose('td', self.tsv.Map[ri+self.tsv.RowHeader.Length][cdi])
+            if self.__col_header_pos in ['right', 'both']: tr += self.__make_body_th(ri, isReverse=True)
             html += HTML.enclose('tr', tr)
         return html
+    def __make_body_th(self, ri, isReverse=False):
+        tr = ''
+        for chi in reversed(range(self.tsv.ColHeader.Length)) if isReverse else range(self.tsv.ColHeader.Length):
+#        for ci in reversed(range(len(self.tsv.RowHeader.SpanLenMap[ri]))) if isReverse else range(len(self.tsv.RowHeader.SpanLenMap[ri])):
+#        for chi in range(self.tsv.ColHeader.Length):
+            if self.tsv.ColHeader.SpanLenMap[ri][chi][0] < 1 and self.tsv.ColHeader.SpanLenMap[ri][chi][1] < 1: continue
+            tr += HTML.enclose('th', self.tsv.Map[ri+self.tsv.RowHeader.Length][chi], self.__make_attr(self.tsv.ColHeader.SpanLenMap, ri, chi))
+        return tr
     def __make_attr(self, spanLenMap, ri, ci):
         attrs = {}
         if 1 < spanLenMap[ri][ci][0]: attrs['rowspan'] = spanLenMap[ri][ci][0]

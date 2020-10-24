@@ -12,40 +12,29 @@ class CLI:
         self.__stdin = [line.rstrip('\n') for line in sys.stdin.readlines()]
         print(self.__stdin)
         parser = argparse.ArgumentParser(description='このプログラムの説明（なくてもよい）')
-        parser.add_argument('-H', '--header', default='a', help='ヘッダ形式')
+        parser.add_argument('-H', '--header', default='r', help='ヘッダ形式')
         parser.add_argument('-r', '--row', default='r', help='行ヘッダの表示位置')
         parser.add_argument('-c', '--column', default='r', help='列ヘッダの表示位置')
         parser.add_argument('-m', '--merge', action='store_false', help='セル結合しない。')
         self.__args = parser.parse_args()
 
-        
-        tsv = self.__getTsv()
+        tsv = TSV()
         tsv.parse(self.__stdin)
-        print(tsv.ColHeader.Length)
         return ToTable(tsv).make()
-    def __getTsv(self):
-        if self.__args.header.lower() in ['a','auto','r','row','m','matrix']:
-            return TSV()
-        elif self.__args.header.lower() in ['c','col','column']:
-            return TSV(hasRowHeader=False)
-        else: return TSV()
 
 class TSV:
-    def __init__(self, hasRowHeader=True):
+    def __init__(self):
         self.__textMap = []
         self.__textLenMap = []
-        self.__hasRowHeader = hasRowHeader
     def parse(self, tsv):
         self.__textMap.clear()
         self.__textLenMap.clear()
         for cols in csv.reader(tsv, delimiter='\t'):
             self.__textMap.append([ col for col in cols ])
             self.__textLenMap.append([ len(col) for col in cols ])
-        print('textMap')
         print(self.__textMap)
-        print('textLenMap')
         print(self.__textLenMap)
-        self.__row_header = RowHeader(self.__textLenMap, self.__hasRowHeader)
+        self.__row_header = RowHeader(self.__textLenMap)
         self.__col_header = ColumnHeader(self.__textLenMap, self.__row_header.Length)
     @property
     def Map(self): return self.__textMap
@@ -57,34 +46,19 @@ class TSV:
     def ColHeader(self): return self.__col_header
 
 class RowHeader:
-    def __init__(self, textLenMap, hasRowHeader=True):
-        if hasRowHeader:
-            self.__len = self.__inferLength(textLenMap)
-            print(self.__len)
-            self.__calcSpanMap(textLenMap)
-        else:
-            self.__len = 0
-            self.__spanLenMap = []
+    def __init__(self, textLenMap):
+        self.__len = self.__inferLength(textLenMap)
+        self.__calcSpanMap(textLenMap)
     @property
     def Length(self): return self.__len
     @property
     def SpanLenMap(self): return self.__spanLenMap
     def __inferLength(self, textLenMap):
-        blank_len = 0
-        for ci in range(len(textLenMap[0])):
-            if 0 == textLenMap[0][ci]: blank_len += 1
-            else: break
-        print('blank_len=', blank_len)
-        is_exist_map = numpy.full(len(textLenMap[0])-blank_len, False)
-        print(is_exist_map)
+        is_exist_map = numpy.full(len(textLenMap), False)
         for ri, row in enumerate(textLenMap):
-            print(textLenMap[ri])
-            for ci in range(blank_len, len(textLenMap[ri])):
-#                print(ri, ci, )
-                if not 0 == textLenMap[ri][ci]: is_exist_map[ci-blank_len] = True
-            print(ri, is_exist_map)
-            if all(is_exist_map): return ri+1 if 0 < ri else 1
-        print(is_exist_map)
+            for ci, col in enumerate(textLenMap[ri]):
+                if not 0 == col: is_exist_map[ci] = True
+            if all(is_exist_map): return ri if 0 < ri else 1
     def __calcSpanMap(self, textLenMap):
         self.__spanLenMap = []
         for ri in range(self.Length):
@@ -142,8 +116,7 @@ class ColumnHeader:
         for ci, col in enumerate(textLenMap[0]):
             if 0 == col: col_len += 1
             else: break
-        if 0 == self.__row_header_len and 0 == col_len: return 1
-        else: return col_len
+        return col_len
     def __calcSpanMap(self, textLenMap):
         self.__spanLenMap = []
         for ri in range(self.__row_header_len, len(textLenMap)):
@@ -211,7 +184,6 @@ class Merger:
     def __setColspanMinus(spanLenMap, ri, ci, rlen):
         if 1 < spanLenMap[ri][ci][0]:
             for R in range(ri+1, ri+rlen):
-                print(R, ci, len(spanLenMap))
                 spanLenMap[R][ci][1] = -1
     @staticmethod
     def setRowspanStopByColspan(spanLenMap):
@@ -268,8 +240,7 @@ class ToTable:
             for chi in range(self.tsv.ColHeader.Length):
                 if self.tsv.ColHeader.SpanLenMap[ri][chi][0] < 1 and self.tsv.ColHeader.SpanLenMap[ri][chi][1] < 1: continue
                 tr += HTML.enclose('th', self.tsv.Map[ri+self.tsv.RowHeader.Length][chi], self.__make_attr(self.tsv.ColHeader.SpanLenMap, ri, chi))
-#            for cdi in range(self.tsv.ColHeader.Length, len(self.tsv.Map)):
-            for cdi in range(self.tsv.ColHeader.Length, len(self.tsv.Map[ri])):
+            for cdi in range(self.tsv.ColHeader.Length, len(self.tsv.Map)):
                 tr += HTML.enclose('td', self.tsv.Map[ri+self.tsv.RowHeader.Length][cdi])
             html += HTML.enclose('tr', tr)
         return html

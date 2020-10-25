@@ -125,8 +125,8 @@ class RowHeader:
 #            print(self.__len)
             self.__calcSpanMap(textLenMap)
             self.__make_textMap(textMap)
-            self.__make_rev_textMap()
             self.__make_rev_spanLenMap()
+            self.__make_rev_textMap()
         else:
             self.__len = 0
             self.__spanLenMap = []
@@ -226,15 +226,15 @@ class RowHeader:
                 self.__textMap[-1].append(textMap[ri][ci])
 
     def __make_rev_textMap(self):
-#        rev = reversed(self.Map)
-#        self.__rev_textMap = copy.deepcopy(self.__textMap)
-#        self.__rev_textMap = reversed(self.Map)
         self.__rev_textMap = list(reversed(copy.deepcopy(self.Map)))
         for ri in range(len(self.__rev_textMap)):
             for ci in range(len(self.__rev_textMap[ri])):
                 if '' == self.__rev_textMap[ri][ci]:
+#                if '' == self.__rev_textMap[ri][ci] and (0 < self.__rev_spanLenMap[ri][ci][0]):
                     for R in range(ri, len(self.__rev_textMap)):
-                        if not '' == self.__rev_textMap[R][ci]:
+#                        if not '' == self.__rev_textMap[R][ci]:
+#                        if 1 < self.__rev_spanLenMap[R][ci][0] or 1 < self.__rev_spanLenMap[R][ci][1]:
+                        if not '' == self.__rev_textMap[R][ci] and self.__rev_spanLenMap[R][ci][0] < 1:
                             self.__rev_textMap[ri][ci] = self.__rev_textMap[R][ci]
                             self.__rev_textMap[R][ci] = ''
         print('-----------------')
@@ -428,7 +428,8 @@ class ToTable:
             row_header_tr_inners.append([])
             for ci in range(len(self.tsv.RowHeader.SpanLenMap[ri])):
 #                if self.tsv.RowHeader.SpanLenMap[ri][ci][0] < 1 and self.tsv.RowHeader.SpanLenMap[ri][ci][1] < 1: continue
-                if '' == self.tsv.RowHeader.get_map(isReverse)[ri][ci]: continue
+                if self.tsv.RowHeader.get_span_len_map(isReverse)[ri][ci][0] < 1 and self.tsv.RowHeader.get_span_len_map(isReverse)[ri][ci][1] < 1: continue
+#                if '' == self.tsv.RowHeader.get_map(isReverse)[ri][ci]: continue
                 row_header_tr_inners[-1].append(
                     HTML.enclose('th', 
                                  self.tsv.RowHeader.get_map(isReverse)[ri][ci], 

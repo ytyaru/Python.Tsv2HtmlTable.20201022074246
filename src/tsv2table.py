@@ -6,23 +6,25 @@ import sys
 import numpy
 import copy
 from abc import ABCMeta, abstractmethod
-#from log.ColoredFormatter import ColoredFormatter
 from log.ColoredLogger import ColoredLogger
 
-logger = ColoredLogger()
+#logger = ColoredLogger()
+logger = None
 class CLI:
     def __init__(self): pass
     def parse(self):
-#        print(self.__stdin)
         parser = argparse.ArgumentParser(description='TSVをHTMLのtableタグに変換する。')
         parser.add_argument('-H', '--header', default='a', help='ヘッダ形式')
         parser.add_argument('-r', '--row', default='t', choices=['t', 'top', 'b', 'bottom', 'B', 'both'], help='行ヘッダの表示位置')
         parser.add_argument('-c', '--column', default='l', choices=['l', 'left', 'r', 'right', 'B', 'both'], help='列ヘッダの表示位置')
         parser.add_argument('-m', '--merge', action='store_false', help='セル結合しない。')
-        parser.add_argument('-l', '--logging-file', default='/dev/stderr', help='ログ出力先')
+        parser.add_argument('-l', '--logging-level', default='e', choices=['c', 'critical', 'e', 'error', 'w', 'warning', 'i', 'info', 'd', 'debug'], help='ログレベル')
         self.__args = parser.parse_args()
 
         self.__stdin = [line.rstrip('\n') for line in sys.stdin.readlines()]
+        global logger 
+        logger = ColoredLogger(level=self.__get_logging_level())
+#        logger = ColoredLogger()
         
         pos = self.__getHeaderPos()
         tsv = self.__getTsv()
@@ -45,6 +47,17 @@ class CLI:
         elif self.__args.column in ['B','both']: pos['col_header_pos'] = 'both'
         else: pos['col_header_pos'] = 'left'
         return pos
+    def __get_logging_level(self):
+        import logging
+        self.__args.logging_level = self.__args.logging_level.lower()
+        if   'c' == self.__args.logging_level: self.__args.logging_level = 'critical'
+        elif 'e' == self.__args.logging_level: self.__args.logging_level = 'error'
+        elif 'w' == self.__args.logging_level: self.__args.logging_level = 'warning'
+        elif 'i' == self.__args.logging_level: self.__args.logging_level = 'info'
+        elif 'd' == self.__args.logging_level: self.__args.logging_level = 'debug'
+        if self.__args.logging_level not in ['critical', 'error', 'warning', 'info', 'debug']:
+            self.__args.logging_level = 'critical'
+        return getattr(logging, self.__args.logging_level.upper())
 
 class TSV:
     def __init__(self, hasRowHeader=True):
@@ -363,7 +376,6 @@ class Merger:
     def __setColspanMinus(spanLenMap, ri, ci, rlen):
         if 1 < spanLenMap[ri][ci][0]:
             for R in range(ri+1, ri+rlen):
-#                print(R, ci, len(spanLenMap))
                 spanLenMap[R][ci][1] = -1
     @staticmethod
     def setRowspanStopByColspan(spanLenMap):
@@ -386,7 +398,6 @@ class Merger:
         if 1 < rs and 1 < cs:
             for R in range(ri+1, ri+rs):
                 for C in range(ci+1, ci+cs):
-#                    print(ri, ci, rs, cs, R,C, spanLenMap[R][C])
                     if not (spanLenMap[R][C][0] < 1 and spanLenMap[R][C][1] < 1): return False
         return True
     @staticmethod
@@ -404,7 +415,6 @@ class ToTable:
         self.tsv = tsv
         self.__col_header_pos = col_header_pos.lower()
         self.__row_header_pos = row_header_pos.lower()
-#        print(self.__row_header_pos,  self.__col_header_pos)
     def make(self):
         html = ''
         if self.__row_header_pos in ['top', 'both']: html += self.__make_row_header()
@@ -412,6 +422,7 @@ class ToTable:
         if self.__row_header_pos in ['bottom', 'both']: html += self.__make_row_header(isReverse=True)
         return HTML.enclose('table', html)
     def __make_row_header(self, isReverse=False):
+        logger.debug('----- ToTable.__make_row_header -----')
         row_header_tr_inners = []
         for ri in range(self.tsv.RowHeader.Length):
             row_header_tr_inners.append([])
@@ -422,11 +433,10 @@ class ToTable:
                                  self.tsv.RowHeader.get_map(isReverse)[ri][ci], 
                                  self.__make_attr(self.tsv.RowHeader.get_span_len_map(isReverse), ri, ci)))
         self.__make_matrix_header(row_header_tr_inners)
-#        print(row_header_tr_inners)
+        logger.debug('{}'.format(row_header_tr_inners))
         return ''.join([HTML.enclose('tr', ''.join(row_header_tr_inners[ri])) for ri in range(len(row_header_tr_inners))])
 
     def __make_matrix_header(self, row_header_tr_inners):
-#        print(self.tsv.MatrixHeader.Pos)
         matrix_header_th = HTML.enclose('th', '', {'rowspan': self.tsv.MatrixHeader.Size[0], 'colspan': self.tsv.MatrixHeader.Size[1]})
         if self.tsv.MatrixHeader.Pos[0][0] or self.tsv.MatrixHeader.Pos[1][0]:
             row_header_tr_inners[0].insert(0, matrix_header_th)

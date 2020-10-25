@@ -4,6 +4,7 @@ import argparse
 import csv
 import sys
 import numpy
+import copy
 from abc import ABCMeta, abstractmethod
 
 class CLI:
@@ -56,19 +57,32 @@ class TSV:
         for cols in csv.reader(tsv, delimiter='\t'):
             self.__textMap.append([ col for col in cols ])
             self.__textLenMap.append([ len(col) for col in cols ])
+        self.__make_reverseMap()
 #        print('textMap')
 #        print(self.__textMap)
 #        print('textLenMap')
 #        print(self.__textLenMap)
-        self.__row_header = RowHeader(self.__textLenMap, self.__hasRowHeader)
+        self.__row_header = RowHeader(self.__textMap, self.__textLenMap, self.__hasRowHeader)
         self.__col_header = ColumnHeader(self.__textLenMap, self.__row_header.Length)
         self.__mat_header = MatrixHeader(self.__textLenMap, 
                                          row_header_pos, 
                                          col_header_pos, 
                                          self.__row_header.Length, 
                                          self.__col_header.Length)
+    def __make_reverseMap(self):
+        rev = reversed(self.Map)
+        for ri in range(len(self.Map)):
+            for ci in range(len(self.Map[ri])):
+                if 0 == len(self.Map[ri][ci]):
+                    for R in range(ri, len(self.Map)):
+                        if not 0 == len(self.Map[ri][ci]):
+                            rev[ri][ci] = self.Map[R][ci]
+                            rev[R][ci] = self.Map[ri][ci]
+        self.__reversed_row_header_map = rev
     @property
     def Map(self): return self.__textMap
+    @property
+    def ReversedRowHeaderMap(self): return self.__reversed_row_header_map
     @property
     def LenMap(self): return self.__textLenMap
     @property
@@ -105,18 +119,27 @@ class MatrixHeader:
     def Pos(self): return self.__pos
 
 class RowHeader:
-    def __init__(self, textLenMap, hasRowHeader=True):
+    def __init__(self, textMap, textLenMap, hasRowHeader=True):
         if hasRowHeader:
             self.__len = self.__inferLength(textLenMap)
 #            print(self.__len)
             self.__calcSpanMap(textLenMap)
+            self.__make_textMap(textMap)
+            self.__make_rev_textMap()
         else:
             self.__len = 0
             self.__spanLenMap = []
+            self.__textMap = []
+            self.__rev_textMap = []
     @property
     def Length(self): return self.__len
     @property
     def SpanLenMap(self): return self.__spanLenMap
+    @property
+    def Map(self): return self.__textMap
+    @property
+    def ReversedMap(self): return self.__rev_textMap
+
     def __inferLength(self, textLenMap):
         blank_len = 0
         for ci in range(len(textLenMap[0])):
@@ -184,6 +207,53 @@ class RowHeader:
             for R in reversed(range(ri)):
                 if ri <= self.__spanLenMap[R][C][0] - 1 - R + ri: return C - ci
         return None
+
+    def __make_textMap(self, textMap):
+        self.__textMap = []
+        for ri in range(self.Length):
+#        for ri in range(len(textMap)):
+            self.__textMap.append([])
+            for ci in range(self.__blank_len, len(textMap[ri])):
+                self.__textMap[-1].append(textMap[ri][ci])
+
+    def __make_rev_textMap(self):
+#        rev = reversed(self.Map)
+#        self.__rev_textMap = copy.deepcopy(self.__textMap)
+#        self.__rev_textMap = reversed(self.Map)
+        self.__rev_textMap = list(reversed(copy.deepcopy(self.Map)))
+        for ri in range(len(self.__rev_textMap)):
+            for ci in range(len(self.__rev_textMap[ri])):
+                if '' == self.__rev_textMap[ri][ci]:
+                    for R in range(ri, len(self.__rev_textMap)):
+                        if not '' == self.__rev_textMap[R][ci]:
+#                        if not '' == self.Map[R][ci]:
+#                            self.__rev_textMap[ri][ci] = self.Map[R][ci]
+#                            self.__rev_textMap[R][ci] = self.Map[ri][ci]
+#                            pass
+                            self.__rev_textMap[ri][ci] = self.__rev_textMap[R][ci]
+                            self.__rev_textMap[R][ci] = ''
+#                            self.__rev_textMap[R][ci] = self.__rev_textMap[ri][ci]
+        print('-----------------')
+        for r in self.__textMap:
+            print(r)
+        print('-----------------')
+        for r in self.__rev_textMap:
+            print(r)
+        print('-----------------')
+"""
+    def __make_rev_textMap(self):
+        rev = reversed(self.Map)
+        for ri in range(len(self.Map)):
+            for ci in range(len(self.Map[ri])):
+                if 0 == len(self.Map[ri][ci]):
+                    for R in range(ri, len(self.Map)):
+                        if not 0 == len(self.Map[ri][ci]):
+                            rev[ri][ci] = self.Map[R][ci]
+                            rev[R][ci] = self.Map[ri][ci]
+        self.__reversed_row_header_map = rev
+"""
+
+        
 
 class ColumnHeader:
     def __init__(self, textLenMap, row_header_len):
@@ -329,22 +399,49 @@ class ToTable:
         return HTML.enclose('table', html)
 #        return HTML.enclose('table', self.__make_row_header() + self.__make_body())
     def __make_row_header(self, isReverse=False):
-        html = ''
-        if self.tsv.MatrixHeader.Pos[0][0] and isReverse == False:
-            html += HTML.enclose('th', '', {'rowspan': self.tsv.MatrixHeader.Size[0], 'colspan': self.tsv.MatrixHeader.Size[1]})
-#        print(self.tsv.RowHeader.Length, len(self.tsv.RowHeader.SpanLenMap[ri]))
-        for ri in reversed(range(self.tsv.RowHeader.Length)) if isReverse else range(self.tsv.RowHeader.Length):
+        row_header_tr_inners = []
 #        for ri in range(self.tsv.RowHeader.Length):
-            tr = ''
-#            for ci in reversed(range(len(self.tsv.RowHeader.SpanLenMap[ri]))) if isReverse else range(len(self.tsv.RowHeader.SpanLenMap[ri])):
+        for ri in reversed(range(self.tsv.RowHeader.Length)) if isReverse else range(self.tsv.RowHeader.Length):
+            row_header_tr_inners.append([])
             for ci in range(len(self.tsv.RowHeader.SpanLenMap[ri])):
                 if self.tsv.RowHeader.SpanLenMap[ri][ci][0] < 1 and self.tsv.RowHeader.SpanLenMap[ri][ci][1] < 1: continue
-#                tr += HTML.enclose('th', self.tsv.Map[ri][ci], self.__make_attr(self.tsv.RowHeader.SpanLenMap, ri, ci))
-                tr += HTML.enclose('th', self.tsv.Map[ri][ci+self.tsv.MatrixHeader.Size[1]], self.__make_attr(self.tsv.RowHeader.SpanLenMap, ri, ci))
-            html += HTML.enclose('tr', tr)
-        if self.tsv.MatrixHeader.Pos[0][1] and isReverse == True:
-            html += HTML.enclose('th', '', {'rowspan': self.tsv.MatrixHeader.Size[0], 'colspan': self.tsv.MatrixHeader.Size[1]})
-        return html
+                row_header_tr_inners[-1].append(
+                    HTML.enclose('th', 
+                                 self.tsv.Map[ri][ci+self.tsv.MatrixHeader.Size[1]], 
+#                                 self.tsv.Map[self.__reverse_ri(ri, isReverse)][ci+self.tsv.MatrixHeader.Size[1]], 
+#                                 self.tsv.Map[self.__not_reverse_ri(ri, isReverse)][ci+self.tsv.MatrixHeader.Size[1]], 
+                                 self.__make_attr(self.tsv.RowHeader.SpanLenMap, self.__not_reverse_ri(ri, isReverse), ci)))
+#                                 self.__make_attr(self.tsv.RowHeader.SpanLenMap, ri, ci)))
+#        if isReverse: row_header_tr_inners = list(reversed(row_header_tr_inners))
+#        self.__make_matrix_header(row_header_tr_inners)
+        print(row_header_tr_inners)
+        return ''.join([HTML.enclose('tr', ''.join(row_header_tr_inners[ri])) for ri in range(len(row_header_tr_inners))])
+#        for ri in range(len(row_header_tr_inners)):
+#            HTML.enclose('tr', ''.join(row_header_tr_inners[ri]))
+    def __not_reverse_ri(self, ri, isReverse=False):
+        if isReverse: return self.tsv.RowHeader.Length - 1 - ri
+        else: return ri
+
+#    def __reverse_ri(self, ri, isReverse=False):
+#        return ri
+#        return self.tsv.RowHeader.Length - 1 - ri
+#        if isReverse: return self.tsv.RowHeader.Length - 1 - ri
+#        else: return ri
+    def __make_matrix_header(self, row_header_tr_inners):
+        print(self.tsv.MatrixHeader.Pos)
+        matrix_header_th = HTML.enclose('th', '', {'rowspan': self.tsv.MatrixHeader.Size[0], 'colspan': self.tsv.MatrixHeader.Size[1]})
+        if self.tsv.MatrixHeader.Pos[0][0]:
+            row_header_tr_inners[0].insert(0, matrix_header_th)
+        if self.tsv.MatrixHeader.Pos[0][1]:
+            row_header_tr_inners[0].append(matrix_header_th)
+        if self.tsv.MatrixHeader.Pos[1][0]:
+            row_header_tr_inners[0].insert(0, matrix_header_th)
+        if self.tsv.MatrixHeader.Pos[1][1]:
+            row_header_tr_inners[0].append(matrix_header_th)
+
+
+
+
     def __make_body(self):
         html = ''
         for ri in range(len(self.tsv.ColHeader.SpanLenMap)):

@@ -105,6 +105,7 @@ class MatrixHeader:
         return (rs, cs)
     def __setPos(self):
         self.__pos = numpy.full((2,2), False)
+        if 0 == self.Size[0] or 0 == self.Size[1]: return
         if self.__row_pos in ['top', 'both'] and self.__col_pos in ['left', 'both']:
             self.__pos[0][0] = True
         if self.__row_pos in ['top', 'both'] and self.__col_pos in ['right', 'both']:

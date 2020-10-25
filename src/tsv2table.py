@@ -8,8 +8,6 @@ import copy
 from abc import ABCMeta, abstractmethod
 from log.ColoredLogger import ColoredLogger
 
-#logger = ColoredLogger()
-logger = None
 class CLI:
     def __init__(self): pass
     def parse(self):
@@ -24,12 +22,15 @@ class CLI:
         self.__stdin = [line.rstrip('\n') for line in sys.stdin.readlines()]
         global logger 
         logger = ColoredLogger(level=self.__get_logging_level())
-#        logger = ColoredLogger()
         
-        pos = self.__getHeaderPos()
-        tsv = self.__getTsv()
-        tsv.parse(self.__stdin, **pos)
-        return ToTable(tsv, **pos).make()
+        try:
+            pos = self.__getHeaderPos()
+            tsv = self.__getTsv()
+            tsv.parse(self.__stdin, **pos)
+            print(ToTable(tsv, **pos).make())
+        except Exception as e:
+            logger.exception(e)
+
     def __getTsv(self):
         if self.__args.header.lower() in ['a','auto','r','row','m','matrix']:
             return TSV()
@@ -148,7 +149,6 @@ class RowHeader:
     def __init__(self, textMap, textLenMap, hasRowHeader=True):
         if hasRowHeader:
             self.__len = self.__inferLength(textLenMap)
-#            print(self.__len)
             self.__calcSpanMap(textLenMap)
             self.__make_textMap(textMap)
             self.__make_rev_spanLenMap()
@@ -186,7 +186,6 @@ class RowHeader:
         is_exist_map = numpy.full(len(textLenMap[0])-blank_len, False)
         logger.debug('is_exist_map: {}'.format(is_exist_map))
         for ri, row in enumerate(textLenMap):
-#            logger.debug('textLenMap[{}]: {}'.format(ri, textLenMap[ri]))
             for ci in range(blank_len, len(textLenMap[ri])):
                 if not 0 == textLenMap[ri][ci]: is_exist_map[ci-blank_len] = True
             logger.debug('[{}]: {}'.format(ri, is_exist_map))
@@ -266,12 +265,6 @@ class RowHeader:
                             tmp = copy.deepcopy(self.__rev_spanLenMap[ri][ci])
                             self.__rev_spanLenMap[ri][ci] = self.__rev_spanLenMap[R][ci]
                             self.__rev_spanLenMap[R][ci] = tmp
-#        print('-----------------')
-#        for r in self.__spanLenMap:
-#            print(r)
-#        print('-----------------')
-#        for r in self.__rev_spanLenMap:
-#            print(r)
         logger.debug('----- RowHeader.__make_spanLenMap -----')
         logger.debug('---- spanLenMap -----')
         for r in self.__spanLenMap:
@@ -303,7 +296,6 @@ class ColumnHeader:
             for ci in range(len(textLenMap[0])):
                 for ri in range(self.__row_header_len, len(textLenMap)):
                     if not 0 == textLenMap[ri][ci]: is_exist_map[ri] = True
-#                print(is_exist_map)
                 logger.debug('is_exist_map: {}'.format(is_exist_map))
                 if all(is_exist_map): return col_len+1
                 col_len += 1
@@ -475,5 +467,7 @@ class HTML:
             result += ' {}="{}"'.format(key, attrs[key])
         return result
 
+
 if __name__ == '__main__':
-    print(CLI().parse())
+    CLI().parse()
+

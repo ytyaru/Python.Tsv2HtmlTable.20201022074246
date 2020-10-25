@@ -6,7 +6,10 @@ import sys
 import numpy
 import copy
 from abc import ABCMeta, abstractmethod
+#from log.ColoredFormatter import ColoredFormatter
+from log.ColoredLogger import ColoredLogger
 
+logger = ColoredLogger()
 class CLI:
     def __init__(self): pass
     def parse(self):
@@ -16,6 +19,7 @@ class CLI:
         parser.add_argument('-r', '--row', default='t', choices=['t', 'top', 'b', 'bottom', 'B', 'both'], help='行ヘッダの表示位置')
         parser.add_argument('-c', '--column', default='l', choices=['l', 'left', 'r', 'right', 'B', 'both'], help='列ヘッダの表示位置')
         parser.add_argument('-m', '--merge', action='store_false', help='セル結合しない。')
+        parser.add_argument('-l', '--logging-file', default='/dev/stderr', help='ログ出力先')
         self.__args = parser.parse_args()
 
         self.__stdin = [line.rstrip('\n') for line in sys.stdin.readlines()]
@@ -54,10 +58,10 @@ class TSV:
             self.__textMap.append([ col for col in cols ])
             self.__textLenMap.append([ len(col) for col in cols ])
         self.__make_reverseMap()
-#        print('textMap')
-#        print(self.__textMap)
-#        print('textLenMap')
-#        print(self.__textLenMap)
+        logger.debug('----- textMap -----')
+        logger.debug(self.__textMap)
+        logger.debug('----- textLenMap -----')
+        logger.debug(self.__textLenMap)
         self.__row_header = RowHeader(self.__textMap, self.__textLenMap, self.__hasRowHeader)
         self.__col_header = ColumnHeader(self.__textLenMap, self.__row_header.Length)
         self.__mat_header = MatrixHeader(self.__textLenMap, 
@@ -65,6 +69,18 @@ class TSV:
                                          col_header_pos, 
                                          self.__row_header.Length, 
                                          self.__col_header.Length)
+        logger.debug('----- MatrixHeader -----')
+        logger.debug('Pos: {}'.format(self.__mat_header.Pos))
+        logger.debug('Size: {}'.format(self.__mat_header.Size))
+        logger.debug('----- RowHeader -----')
+        logger.debug('Length: {}'.format(self.__row_header.Length))
+        logger.debug('Map: {}'.format(self.__row_header.Map))
+        logger.debug('ReversedMap: {}'.format(self.__row_header.ReversedMap))
+        logger.debug('SpanLenMap: {}'.format(self.__row_header.SpanLenMap))
+        logger.debug('ReversedSpanLenMap: {}'.format(self.__row_header.ReversedSpanLenMap))
+        logger.debug('----- ColumnHeader -----')
+        logger.debug('Length: {}'.format(self.__col_header.Length))
+        logger.debug('SpanLenMap: {}'.format(self.__col_header.SpanLenMap))
     def __make_reverseMap(self):
         rev = reversed(self.Map)
         for ri in range(len(self.Map)):
@@ -152,17 +168,19 @@ class RowHeader:
             if 0 == textLenMap[0][ci]: blank_len += 1
             else: break
         self.__blank_len = blank_len
-#        print('blank_len=', blank_len)
+        logger.debug('----- RowHeader.__inferLength -----')
+        logger.debug('blank_len: {}'.format(blank_len))
         is_exist_map = numpy.full(len(textLenMap[0])-blank_len, False)
-#        print(is_exist_map)
+        logger.debug('is_exist_map: {}'.format(is_exist_map))
         for ri, row in enumerate(textLenMap):
-#            print(textLenMap[ri])
+#            logger.debug('textLenMap[{}]: {}'.format(ri, textLenMap[ri]))
             for ci in range(blank_len, len(textLenMap[ri])):
                 if not 0 == textLenMap[ri][ci]: is_exist_map[ci-blank_len] = True
-#            print(ri, is_exist_map)
+            logger.debug('[{}]: {}'.format(ri, is_exist_map))
             if all(is_exist_map): return ri+1 if 0 < ri else 1
-#        print(is_exist_map)
+        logger.error('is_exist_map: {}'.format(is_exist_map))
     def __calcSpanMap(self, textLenMap):
+        logger.debug('----- RowHeader.__calcSpanMap before -----')
         self.__spanLenMap = []
         for ri in range(self.Length):
             self.__spanLenMap.append([])
@@ -172,16 +190,16 @@ class RowHeader:
                     rs = Merger.getRowZeroLen(textLenMap, ri, ci)
                     cs = Merger.getColZeroLen(textLenMap, ri, ci)
                     self.__spanLenMap[-1].append([rs,cs])
-#                print(self.__spanLenMap[-1][-1], end=',')
-#            print()
+            logger.debug('{}'.format(self.__spanLenMap[ri]))
         self.__removeMatrixHeader()
         Merger.setColspanStopByRowspan(self.__spanLenMap)
         Merger.setRowspanStopByColspan(self.__spanLenMap)
         self.__CrossSpanHeader()
         Merger.setZeroRect(self.__spanLenMap)
-#        print()
-#        for ri in range(len(self.__spanLenMap)):
-#            print(*self.__spanLenMap[ri])
+
+        logger.debug('----- RowHeader.__calcSpanMap after -----')
+        for ri in range(len(self.__spanLenMap)):
+            logger.debug('{}'.format(self.__spanLenMap[ri]))
 
     def __removeMatrixHeader(self):
         for ri in range(self.Length):
@@ -217,13 +235,14 @@ class RowHeader:
                         if not '' == self.__rev_textMap[R][ci] and self.__rev_spanLenMap[R][ci][0] < 1:
                             self.__rev_textMap[ri][ci] = self.__rev_textMap[R][ci]
                             self.__rev_textMap[R][ci] = ''
-#        print('-----------------')
-#        for r in self.__textMap:
-#            print(r)
-#        print('-----------------')
-#        for r in self.__rev_textMap:
-#            print(r)
-#        print('-----------------')
+        logger.debug('----- RowHeader.__make_rev_textMap -----')
+        logger.debug('---- textMap -----')
+        for r in self.__textMap:
+            logger.debug('{}'.format(r))
+        logger.debug('---- rev_textMap -----')
+        for r in self.__rev_textMap:
+            logger.debug('{}'.format(r))
+
     def __make_rev_spanLenMap(self):
         self.__rev_spanLenMap = list(reversed(copy.deepcopy(self.SpanLenMap)))
         for ri in range(len(self.__rev_spanLenMap)):
@@ -240,18 +259,25 @@ class RowHeader:
 #        print('-----------------')
 #        for r in self.__rev_spanLenMap:
 #            print(r)
+        logger.debug('----- RowHeader.__make_spanLenMap -----')
+        logger.debug('---- spanLenMap -----')
+        for r in self.__spanLenMap:
+            logger.debug('{}'.format(r))
+        logger.debug('---- rev_spanLenMap -----')
+        for r in self.__rev_spanLenMap:
+            logger.debug('{}'.format(r))
 
 class ColumnHeader:
     def __init__(self, textLenMap, row_header_len):
         self.__row_header_len = row_header_len
         self.__len = self.__inferLength(textLenMap)
-#        print('col_len=', self.__len)
         self.__calcSpanMap(textLenMap)
     @property
     def Length(self): return self.__len
     @property
     def SpanLenMap(self): return self.__spanLenMap
     def __inferLength(self, textLenMap):
+        logger.debug('----- ColumnHeader.__inferLength -----')
         col_len = 0
         if 0 < self.__row_header_len:
             for ci, col in enumerate(textLenMap[0]):
@@ -265,10 +291,12 @@ class ColumnHeader:
                 for ri in range(self.__row_header_len, len(textLenMap)):
                     if not 0 == textLenMap[ri][ci]: is_exist_map[ri] = True
 #                print(is_exist_map)
+                logger.debug('is_exist_map: {}'.format(is_exist_map))
                 if all(is_exist_map): return col_len+1
                 col_len += 1
 
     def __calcSpanMap(self, textLenMap):
+        logger.debug('----- ColumnHeader.__calcSpanMap -----')
         self.__spanLenMap = []
         for ri in range(self.__row_header_len, len(textLenMap)):
             self.__spanLenMap.append([])
@@ -278,15 +306,15 @@ class ColumnHeader:
                     rs = Merger.getRowZeroLen(textLenMap, ri, ci)
                     cs = Merger.getColZeroLen(textLenMap, ri, ci)
                     self.__spanLenMap[-1].append([rs,cs])
-#                print(self.__spanLenMap[-1][-1], end=',')
-#            print()
+            logger.debug('{}'.format(self.__spanLenMap[-1]))
         Merger.setColspanStopByRowspan(self.__spanLenMap)
         Merger.setRowspanStopByColspan(self.__spanLenMap)
         self.__CrossSpanHeader()
         Merger.setZeroRect(self.__spanLenMap)
-#        print()
-#        for ri in range(len(self.__spanLenMap)):
-#            print(*self.__spanLenMap[ri])
+
+        logger.debug('----- ColumnHeader.__calcSpanMap after -----')
+        for ri in range(len(self.__spanLenMap)):
+            logger.debug('{}'.format(self.__spanLenMap[ri]))
 
     def __CrossSpanHeader(self):
         self.__CrossSpanC()

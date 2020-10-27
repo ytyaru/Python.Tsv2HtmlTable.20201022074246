@@ -5,6 +5,7 @@
     <title>TSV to HTML table by Python</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" type="text/css" href="highlight.css">
+    <link rel="stylesheet" type="text/css" href="table.css">
 </head>
 <body>
 <main>
@@ -99,43 +100,42 @@
                 <a id="pattern-basic-0-row-1"></a>
                 <h1><a href="tsv/row_1.tsv">row_1.tsv</a>　<a href="#pattern-basic-0-row-1">¶</a></h1>
                 <pre><code>cat row_1.tsv | tsv2table.py</code></pre>
-                <pre><code></code></pre>
+                <table><tr><th>A</th><th>B</th><th>C</th><th>D</th></tr><tr><td>a</td><td>b</td><td>c</td><td>d</td></tr><tr><td>e</td><td>f</td><td>g</td><td>h</td></tr><tr><td>i</td><td>j</td><td>k</td><td>l</td></tr></table>
             </section>
             <section>
                 <a id="pattern-basic-0-row-3"></a>
                 <h1>row_3.tsv　<a href="#pattern-basic-0-row-3">¶</a></h1>
                 <pre><code>cat row_3.tsv | tsv2table.py</code></pre>
-                <pre><code></code></pre>
+                <table><tr><th colspan="4">ア</th><th rowspan="3">イ</th><th>ウ</th><th></th></tr><tr><th colspan="2">A</th><th colspan="2">B</th><th></th><th rowspan="2">C</th></tr><tr><th>a</th><th>b</th><th>c</th><th>d</th><th>e</th></tr><tr><td>A</td><td>B</td><td>C</td><td>D</td><td>E</td><td>F</td><td>G</td></tr><tr><td>H</td><td>I</td><td>J</td><td>K</td><td>L</td><td>M</td><td>N</td></tr><tr><td>OP</td><td></td><td>QX</td><td>R</td><td>ST</td><td></td><td>U</td></tr></table>
             </section>
             <section>
                 <a id="pattern-basic-0-matrix-1"></a>
-                <h1>matrix_1.tsv　<a href="#pattern-basic-0-matrix-1">¶</a></h1>
+                <h1><a href="tsv/.tsv"></a>matrix_1.tsv　<a href="#pattern-basic-0-matrix-1">¶</a></h1>
                 <pre><code>cat matrix_1.tsv | tsv2table.py</code></pre>
-                <pre><code></code></pre>
+                <table><tr><th rowspan="1" colspan="1"></th><th>A</th><th>B</th><th>C</th></tr><tr><th>1</th><td>a</td><td>b</td><td>c</td></tr><tr><th>2</th><td>d</td><td>e</td><td>f</td></tr><tr><th>3</th><td>g</td><td>h</td><td>i</td></tr></table>
             </section>
             <section>
                 <a id="pattern-basic-0-matrix-3"></a>
-                <h1>matrix_3.tsv　<a href="#pattern-basic-0-matrix-3">¶</a></h1>
+                <h1><a href="tsv/.tsv">matrix_3.tsv　<a href="#pattern-basic-0-matrix-3">¶</a></h1>
                 <pre><code>cat matrix_3.tsv | tsv2table.py</code></pre>
-                <pre><code></code></pre>
+                <table><tr><th rowspan="3" colspan="3"></th><th colspan="4">ア</th><th rowspan="3">イ</th><th>ウ</th><th></th></tr><tr><th colspan="2">A</th><th colspan="2">B</th><th></th><th rowspan="2">C</th></tr><tr><th>a</th><th>b</th><th>c</th><th>d</th><th>e</th></tr><tr><th rowspan="4">あ</th><th rowspan="2">A</th><th>a</th><td>A</td><td>B</td><td>C</td><td>D</td><td>E</td><td>F</td><td>G</td></tr><tr><th>b</th><td>H</td><td>I</td><td>J</td><td>K</td><td>L</td><td>M</td><td>N</td></tr><tr><th rowspan="2">B</th><th>c</th><td>OP</td><td></td><td>QX</td><td>R</td><td>STZa</td><td></td><td>U</td></tr><tr><th>d</th><td>V</td><td>W</td><td></td><td>Y</td><td></td><td></td><td>b</td></tr><tr><th colspan="3">い</th><td>c</td><td>d</td><td>e</td><td>f</td><td>g</td><td>h</td><td>i</td></tr><tr><th>う</th><th></th><th>e</th><td>j</td><td>k</td><td>l</td><td>m</td><td>n</td><td>o</td><td>p</td></tr><tr><th></th><th colspan="2">C</th><td>q</td><td>r</td><td>s</td><td>t</td><td>u</td><td>v</td><td>w</td></tr></table>
             </section>
-
-
-            <section>
-                <a id="pattern-basic-0-col-1"></a>
-                <h1>col_1.tsv　<a href="#pattern-basic-0-col-1">¶</a></h1>
-            </section>
-
-
-            <pre><code></code></pre>
-            <pre><code></code></pre>
-            <table><tr><th>A</th><th>B</th><th>C</th><th>D</th></tr><tr><td>a</td><td>b</td><td>c</td><td>d</td></tr><tr><td>e</td><td>f</td><td>g</td><td>h</td></tr><tr><td>i</td><td>j</td><td>k</td><td>l</td></tr></table>
         </section>
         <section>
             <a id="pattern-basic-1"></a>
             <h1>tsv2table.py -H c　<a href="#pattern-basic-1">¶</a></h1>
-            <pre><code></code></pre>
-            <pre><code></code></pre>
+            <section>
+                <a id="pattern-basic-1-col-1"></a>
+                <h1><a href="tsv/col_1.tsv">col_1.tsv</a>　<a href="#pattern-basic-0-col-1">¶</a></h1>
+                <pre><code>cat col_1.tsv | tsv2table.py -H c</code></pre>
+                <table><tr><th>A</th><td>a</td><td>b</td><td>c</td><td>d</td></tr><tr><th>B</th><td>e</td><td>f</td><td>g</td><td>h</td></tr><tr><th>C</th><td>i</td><td>j</td><td>k</td><td>l</td></tr><tr><th>D</th><td>m</td><td>n</td><td>o</td><td>p</td></tr></table>
+            </section>
+            <section>
+                <a id="pattern-basic-1-col-3"></a>
+                <h1><a href="tsv/col_3.tsv">col_1.tsv</a>　<a href="#pattern-basic-0-col-3">¶</a></h1>
+                <pre><code>cat col_3.tsv | tsv2table.py -H c</code></pre>
+                <table><tr><th rowspan="4">あ</th><th rowspan="2">A</th><th>a</th><td>A</td><td>B</td><td>C</td><td>D</td><td>E</td><td>F</td><td>G</td></tr><tr><th>b</th><td>H</td><td>I</td><td>J</td><td>K</td><td>L</td><td>M</td><td>N</td></tr><tr><th rowspan="2">B</th><th>c</th><td>OP</td><td></td><td>QX</td><td>R</td><td>STZa</td><td></td><td>U</td></tr><tr><th>d</th><td>V</td><td>W</td><td></td><td>Y</td><td></td><td></td><td>b</td></tr><tr><th colspan="3">い</th><td>c</td><td>d</td><td>e</td><td>f</td><td>g</td><td>h</td><td>i</td></tr><tr><th>う</th><th></th><th>e</th><td>j</td><td>k</td><td>l</td><td>m</td><td>n</td><td>o</td><td>p</td></tr><tr><th></th><th colspan="2">C</th><td>q</td><td>r</td><td>s</td><td>t</td><td>u</td><td>v</td><td>w</td></tr></table>
+            </section>
         </section>
     </section>
     <section>
@@ -146,12 +146,54 @@
             <h1>tsv2table.py -r b　<a href="#pattern-row-bottom">¶</a></h1>
             <pre><code></code></pre>
             <pre><code></code></pre>
+
+            <section>
+                <a id="pattern-row-bottom-row-1"></a>
+                <h1><a href="tsv/row_1.tsv">row_1.tsv</a>　<a href="#pattern-row-bottom-row-1">¶</a></h1>
+                <pre><code>cat row_1.tsv | tsv2table.py -r b</code></pre>
+            </section>
+            <section>
+                <a id="pattern-row-bottom-row-3"></a>
+                <h1><a href="tsv/row_3.tsv">row_3.tsv</a>　<a href="#pattern-row-bottom-row-3">¶</a></h1>
+                <pre><code>cat row_3.tsv | tsv2table.py -r b</code></pre>
+            </section>
+            <section>
+                <a id="pattern-matrix-bottom-matrix-1"></a>
+                <h1><a href="tsv/matrix_1.tsv">matrix_1.tsv</a>　<a href="#pattern-matrix-bottom-matrix-1">¶</a></h1>
+                <pre><code>cat matrix_1.tsv | tsv2table.py -r b</code></pre>
+            </section>
+            <section>
+                <a id="pattern-matrix-bottom-matrix-3"></a>
+                <h1><a href="tsv/matrix_3.tsv">matrix_3.tsv</a>　<a href="#pattern-matrix-bottom-matrix-3">¶</a></h1>
+                <pre><code>cat matrix_3.tsv | tsv2table.py -r b</code></pre>
+            </section>
         </section>
         <section>
             <a id="pattern-row-both"></a>
             <h1>tsv2table.py -r B　<a href="#pattern-row-both">¶</a></h1>
             <pre><code></code></pre>
             <pre><code></code></pre>
+
+            <section>
+                <a id="pattern-row-both-row-1"></a>
+                <h1><a href="tsv/row_1.tsv">row_1.tsv</a>　<a href="#pattern-row-both-row-1">¶</a></h1>
+                <pre><code>cat row_1.tsv | tsv2table.py -r B</code></pre>
+            </section>
+            <section>
+                <a id="pattern-row-both-row-3"></a>
+                <h1><a href="tsv/row_3.tsv">row_3.tsv</a>　<a href="#pattern-row-both-row-3">¶</a></h1>
+                <pre><code>cat row_3.tsv | tsv2table.py -r B</code></pre>
+            </section>
+            <section>
+                <a id="pattern-matrix-both-matrix-1"></a>
+                <h1><a href="tsv/matrix_1.tsv">matrix_1.tsv</a>　<a href="#pattern-matrix-both-matrix-1">¶</a></h1>
+                <pre><code>cat matrix_1.tsv | tsv2table.py -r B</code></pre>
+            </section>
+            <section>
+                <a id="pattern-matrix-both-matrix-3"></a>
+                <h1><a href="tsv/matrix_3.tsv">matrix_3.tsv</a>　<a href="#pattern-matrix-both-matrix-3">¶</a></h1>
+                <pre><code>cat matrix_3.tsv | tsv2table.py -r B</code></pre>
+            </section>
         </section>
     </section>
     <section>

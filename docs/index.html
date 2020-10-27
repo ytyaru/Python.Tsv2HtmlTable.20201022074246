@@ -1,0 +1,168 @@
+<!doctype html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>TSV to HTML table by Python</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" type="text/css" href="highlight.css">
+</head>
+<body>
+<main>
+<article>
+<h1>TSV to HTML table examples</h1>
+<section>
+    <h1>目次</h1>
+    <ol>
+        <li><a href="#usage">使い方</a></li>
+        <li><a href="#parameters">引数</a></li>
+        <li><a href="#pattern">出力パターン</a></li>
+        <ol>
+            <li><a href="#pattern-basic">基本形</a></li>
+            <ol>
+                <li><a href="#pattern-basic-0">tsv2table.py</a></li>
+                <li><a href="#pattern-basic-1">tsv2table.py -H c</a></li>
+            </ol>
+            <li><a href="#pattern-row">行ヘッダ位置</a></li>
+            <ol>
+                <li><a href="#pattern-row-bottom">tsv2table.py -r b</a></li>
+                <li><a href="#pattern-row-both">tsv2table.py -r B</a></li>
+            </ol>
+            <li><a href="#pattern-column">列ヘッダ位置</a></li>
+            <ol>
+                <li><a href="#pattern-column-right">tsv2table.py -H c -c r</a></li>
+                <li><a href="#pattern-column-both">tsv2table.py -H c -c B</a></li>
+            </ol>
+            <li><a href="#pattern-matrix">行列ヘッダ位置</a></li>
+            <ol>
+                <li><a href="#pattern-matrix-top-right">tsv2table.py -c r</a></li>
+                <li><a href="#pattern-matrix-top-both">tsv2table.py -c B</a></li>
+                <li><a href="#pattern-matrix-bottom-right">tsv2table.py -r b -c r</a></li>
+                <li><a href="#pattern-matrix-bottom-both">tsv2table.py -r b -c B</a></li>
+                <li><a href="#pattern-matrix-both-right">tsv2table.py -r B -c r</a></li>
+                <li><a href="#pattern-matrix-both-both">tsv2table.py -r B -c B</a></li>
+            </ol>
+        </ol>
+    </ol>
+</section>
+<section>
+    <a id="usage"></a>
+    <h1>使い方　<a href="#usage">¶</a></h1>
+    <pre><code>tsv2table.py [-H a|r|c|m] [-r t|b|B] [-c l|r|B]</code></pre>
+</section>
+<section>
+    <a id="parameters"></a>
+    <h1>引数　<a href="#parameters">¶</a></h1>
+    <table>
+        <tr>
+                <th>短</th><th>長</th><th>初期値</th><th>候補値</th>
+        </tr>
+        <tr>
+                <td><code>-H</code></td><td><code>--header</code></td><td><code>a</code></td><td>
+                    <table>
+                    <tr><td><code>a</code></td><td><code>auto</code></td><td>ヘッダを推測する。<small><br>1行目1列目が空でなければ列ヘッダなし。<br>1行目に空がなければ行ヘッダは1行のみ。</small></td></tr>
+                    <tr><td><code>r</code></td><td><code>row</code></td><td>行ヘッダがある。</td></tr>
+                    <tr><td><code>c</code></td><td><code>column</code></td><td>列ヘッダがある。</td></tr>
+                    <tr><td><code>m</code></td><td><code>matrix</code></td><td>行列ヘッダがある。</td></tr>
+                    </table>
+                </td>
+        </tr>
+        <tr>
+                <td><code>-r</code></td><td><code>--row</code></td><td><code>t</code></td><td>
+                    <table>
+                    <tr><td><code>t</code></td><td><code>top</code></td><td>行ヘッダを上端に配置する。</td></tr>
+                    <tr><td><code>b</code></td><td><code>bottom</code></td><td>行ヘッダを下端に配置する。</td></tr>
+                    <tr><td><code>B</code></td><td><code>both</code></td><td>行ヘッダを上下両端に配置する。</td></tr>
+                    </table>
+                </td>
+        </tr>
+        <tr>
+                <td><code>-c</code></td><td><code>--column</code></td><td><code>l</code></td><td>
+                    <table>
+                    <tr><td><code>l</code></td><td><code>left</code></td><td>列ヘッダを左端に配置する。</td></tr>
+                    <tr><td><code>r</code></td><td><code>right</code></td><td>列ヘッダを右端に配置する。</td></tr>
+                    <tr><td><code>B</code></td><td><code>both</code></td><td>列ヘッダを左右両端に配置する。</td></tr>
+                    </table>
+                </td>
+        </tr>
+    </table>
+</section>
+<section>
+    <a id="pattern"></a>
+    <h1>出力パターン　<a href="#pattern">¶</a></h1>
+    <section>
+        <a id="pattern-basic"></a>
+        <h1>基本形　<a href="#pattern-basic">¶</a></h1>
+        <section>
+            <a id="pattern-basic-0"></a>
+            <h1>tsv2table.py　<a href="#pattern-basic-0">¶</a></h1>
+        </section>
+        <section>
+            <a id="pattern-basic-1"></a>
+            <h1>tsv2table.py -H c　<a href="#pattern-basic-1">¶</a></h1>
+        </section>
+    </section>
+    <section>
+        <a id="pattern-row"></a>
+        <h1>行ヘッダ位置　<a href="#pattern-row">¶</a></h1>
+        <section>
+            <a id="pattern-row-bottom"></a>
+            <h1>tsv2table.py -r b　<a href="#pattern-row-bottom">¶</a></h1>
+        </section>
+        <section>
+            <a id="pattern-row-both"></a>
+            <h1>tsv2table.py -r B　<a href="#pattern-row-both">¶</a></h1>
+        </section>
+    </section>
+    <section>
+        <a id="pattern-column"></a>
+        <h1>列ヘッダ位置　<a href="#pattern-column">¶</a></h1>
+        <section>
+            <a id="pattern-column-right"></a>
+            <h1>tsv2table.py -H c -c r　<a href="#pattern-column-right">¶</a></h1>
+        </section>
+        <section>
+            <a id="pattern-column-both"></a>
+            <h1>tsv2table.py -H c -c B　<a href="#pattern-column-both">¶</a></h1>
+        </section>
+    </section>
+    <section>
+        <a id="pattern-matrix"></a>
+        <h1>行列ヘッダ位置　<a href="#pattern-matrix">¶</a></h1>
+        <section>
+            <a id="pattern-matrix-top-right"></a>
+            <h1>tsv2table.py -c r　<a href="#pattern-matrix-top-right">¶</a></h1>
+        </section>
+        <section>
+            <a id="pattern-matrix-top-both"></a>
+            <h1>tsv2table.py -c B　<a href="#pattern-matrix-top-both">¶</a></h1>
+        </section>
+        <section>
+            <a id="pattern-matrix-bottom-right"></a>
+            <h1>tsv2table.py -r b -c r　<a href="#pattern-matrix-bottom-right">¶</a></h1>
+        </section>
+        <section>
+            <a id="pattern-matrix-bottom-both"></a>
+            <h1>tsv2table.py -r b -c B　<a href="#pattern-matrix-bottom-both">¶</a></h1>
+        </section>
+        <section>
+            <a id="pattern-matrix-both-right"></a>
+            <h1>tsv2table.py -r B -c r　<a href="#pattern-matrix-both-right">¶</a></h1>
+        </section>
+        <section>
+            <a id="pattern-matrix-both-both"></a>
+            <h1>tsv2table.py -r B -c B　<a href="#pattern-matrix-both-both">¶</a></h1>
+        </section>
+    </section>
+            <li><a href="#pattern-matrix">行列ヘッダ位置</a></li>
+            <ol>
+                <li><a href="#pattern-matrix-top-right"></a></li>
+                <li><a href="#pattern-matrix-top-both"></a></li>
+                <li><a href="#pattern-matrix-bottom-right"></a></li>
+                <li><a href="#pattern-matrix-bottom-both"></a></li>
+                <li><a href="#pattern-matrix-both-right"></a></li>
+                <li><a href="#pattern-matrix-both-both"></a></li>
+</section>
+</article>
+</main>
+</body>
+</html>

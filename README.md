@@ -27,22 +27,6 @@ $ uname -a
 Linux raspberrypi 5.4.51-v7l+ #1333 SMP Mon Aug 10 16:51:40 BST 2020 armv7l GNU/Linux
 ```
 
-# Installation
-
-Install Python 3.7 or higher.
-
-Next, install [pyxel][] as follows.
-
-* [pyxel/README](https://github.com/kitao/pyxel/blob/master/README.md#how-to-install)
-
-```sh
-sudo apt install python3 python3-pip libsdl2-dev libsdl2-image-dev
-git clone https://github.com/kitao/pyxel.git
-cd pyxel
-make -C pyxel/core clean all
-pip3 install .
-```
-
 # Usage
 
 ```sh

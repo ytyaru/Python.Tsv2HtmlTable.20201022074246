@@ -14,13 +14,9 @@
 
 * <time datetime="2020-10-22T07:42:30+0900">2020-10-22</time>
 * [Raspbierry Pi](https://ja.wikipedia.org/wiki/Raspberry_Pi) 4 Model B Rev 1.2
-* [Raspbian](https://ja.wikipedia.org/wiki/Raspbian) buster 10.0 2019-09-26 <small>[setup](http://ytyaru.hatenablog.com/entry/2019/12/25/222222)</small>
+* [Raspberry Pi OS](https://ja.wikipedia.org/wiki/Raspbian) buster 10.0 2020-08-20 <small>[setup](http://ytyaru.hatenablog.com/entry/2020/10/06/111111)</small>
 * bash 5.0.3(1)-release
-* Python 2.7.16
 * Python 3.7.3
-* [pyxel][] 1.3.1
-
-[pyxel]:https://github.com/kitao/pyxel
 
 ```sh
 $ uname -a
@@ -32,7 +28,7 @@ Linux raspberrypi 5.4.51-v7l+ #1333 SMP Mon Aug 10 16:51:40 BST 2020 armv7l GNU/
 ```sh
 git clone https://github.com/ytyaru/Python.Tsv2HtmlTable.20201022074246
 cd Python.Tsv2HtmlTable.20201022074246
-cat docs/tsv/matrix_3.tsv | src/tsv2table.py
+cat ./docs/tsv/matrix_3.tsv | ./src/tsv2table.py
 ```
 
 ## CLI

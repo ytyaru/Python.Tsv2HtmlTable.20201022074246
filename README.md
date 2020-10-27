@@ -43,33 +43,33 @@ tsv2table.py [-H a|r|c|m] [-r t|b|B] [-c l|r|B]
 
 <table>
     <tr>
-            <th>短</th><th>長</th><th>初期値</th><th>候補値</th>
+            <th>short</th><th>long</th><th>default</th><th>values</th>
     </tr>
     <tr>
             <td><code>-H</code></td><td><code>--header</code></td><td><code>a</code></td><td>
                 <table>
-                <tr><td><code>a</code></td><td><code>auto</code></td><td>ヘッダを推測する。<small><br>1行目1列目が空でなければ列ヘッダなし。<br>1行目に空がなければ行ヘッダは1行のみ。</small></td></tr>
-                <tr><td><code>r</code></td><td><code>row</code></td><td>行ヘッダがある。</td></tr>
-                <tr><td><code>c</code></td><td><code>column</code></td><td>列ヘッダがある。</td></tr>
-                <tr><td><code>m</code></td><td><code>matrix</code></td><td>行列ヘッダがある。</td></tr>
+                <tr><td><code>a</code></td><td><code>auto</code></td><td>Guess the header.<small><br>If the first row and first column are not empty, there is no column header.<br>If there is no space in the first line, there is only one line header.</small></td></tr>
+                <tr><td><code>r</code></td><td><code>row</code></td><td>There is a line header.</td></tr>
+                <tr><td><code>c</code></td><td><code>column</code></td><td>There is a column header.</td></tr>
+                <tr><td><code>m</code></td><td><code>matrix</code></td><td>There is a matrix header.</td></tr>
                 </table>
             </td>
     </tr>
     <tr>
             <td><code>-r</code></td><td><code>--row</code></td><td><code>t</code></td><td>
                 <table>
-                <tr><td><code>t</code></td><td><code>top</code></td><td>行ヘッダを上端に配置する。</td></tr>
-                <tr><td><code>b</code></td><td><code>bottom</code></td><td>行ヘッダを下端に配置する。</td></tr>
-                <tr><td><code>B</code></td><td><code>both</code></td><td>行ヘッダを上下両端に配置する。</td></tr>
+                <tr><td><code>t</code></td><td><code>top</code></td><td>Place the row header at the top.</td></tr>
+                <tr><td><code>b</code></td><td><code>bottom</code></td><td>Place the line header at the bottom.</td></tr>
+                <tr><td><code>B</code></td><td><code>both</code></td><td>Place line headers at the top and bottom ends.</td></tr>
                 </table>
             </td>
     </tr>
     <tr>
             <td><code>-c</code></td><td><code>--column</code></td><td><code>l</code></td><td>
                 <table>
-                <tr><td><code>l</code></td><td><code>left</code></td><td>列ヘッダを左端に配置する。</td></tr>
-                <tr><td><code>r</code></td><td><code>right</code></td><td>列ヘッダを右端に配置する。</td></tr>
-                <tr><td><code>B</code></td><td><code>both</code></td><td>列ヘッダを左右両端に配置する。</td></tr>
+                <tr><td><code>l</code></td><td><code>left</code></td><td>Place the column header on the far left.</td></tr>
+                <tr><td><code>r</code></td><td><code>right</code></td><td>Place the column header on the far right.</td></tr>
+                <tr><td><code>B</code></td><td><code>both</code></td><td>Place column headers on the left and right ends.</td></tr>
                 </table>
             </td>
     </tr>
